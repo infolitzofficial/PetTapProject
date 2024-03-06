@@ -10,7 +10,8 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(gnss_sample)
 
 zephyr_library_sources(src/main.c
-                    src/WiFi/WiFiHandler.c)
+                    src/WiFi/WiFiHandler.c
+                    src/System/SystemHandler.c)
 
 zephyr_library_sources_ifdef(CONFIG_GNSS_SAMPLE_ASSISTANCE_NRF_CLOUD src/assistance.c)
 zephyr_library_sources_ifdef(CONFIG_GNSS_SAMPLE_ASSISTANCE_SUPL src/assistance_supl.c)

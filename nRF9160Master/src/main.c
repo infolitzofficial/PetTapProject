@@ -16,6 +16,7 @@
 #include <modem/nrf_modem_lib.h>
 #include <date_time.h>
 #include "WiFi/WiFiHandler.h"
+#include "System/SystemHandler.h"
 
 
 // aws
@@ -622,7 +623,7 @@ static void print_satellite_stats(struct nrf_modem_gnss_pvt_data_frame *pvt_data
 		}
 	}
 
-	printf("Tracking: %2d Using: %2d Unhealthy: %d\n", tracked, in_fix, unhealthy);
+	//printf("Tracking: %2d Using: %2d Unhealthy: %d\n", tracked, in_fix, unhealthy);
 }
 
 static void create_dummy_gnss(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
@@ -1142,8 +1143,8 @@ static void GpsTask()
 				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_SLEEP_BETWEEN_PVT) {
 					printf("Sleep period(s) between PVT notifications\n");
 				}
-				printf("-----------------------------------\n");
-				printk("satelite flag %d\n",last_pvt.flags);
+			//	printf("-----------------------------------\n");
+			//	printk("satelite flag %d\n",last_pvt.flags);
 				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) {
 					gnss_connected = true;
 					fix_timestamp = k_uptime_get();
@@ -1163,10 +1164,10 @@ static void GpsTask()
 					}
 					print_distance_from_reference(&last_pvt);
 				} else {
-					printk("satelite flag %d\n",last_pvt.flags);
+					//printk("satelite flag %d\n",last_pvt.flags);
 					gnss_connected = false;
-					printf("Seconds since last fix: %d\n",
-					       (uint32_t)((k_uptime_get() - fix_timestamp) / 1000));
+					//printf("Seconds since last fix: %d\n",
+					//       (uint32_t)((k_uptime_get() - fix_timestamp) / 1000));
 						    
 						   //print_fix_data(&last_pvt);
 						  count++;
@@ -1177,17 +1178,17 @@ static void GpsTask()
 						count = 0;
 					}
 					else{
-						printk("\ncloud not connected\n");
+						//printk("\ncloud not connected\n");
 					}
 					cnt++;
-					printf("Searching [%c]\n", update_indicator[cnt%4]);
+					//printf("Searching [%c]\n", update_indicator[cnt%4]);
 				}
 
-				printf("\nNMEA strings:\n\n");
+			//	printf("\nNMEA strings:\n\n");
 			}
 		}
 
-		SendData("AT\n\r");
+		//SendData("AT\n\r");
 
 handle_nmea:
 		if (events[1].state == K_POLL_STATE_MSGQ_DATA_AVAILABLE &&
@@ -1195,14 +1196,14 @@ handle_nmea:
 			/* New NMEA data available */
 
 			if (!output_paused()) {
-				printf("%s", nmea_data->nmea_str);
+			//	printf("%s", nmea_data->nmea_str);
 			}
 			k_free(nmea_data);
 		}
 
 		events[0].state = K_POLL_STATE_NOT_READY;
 		events[1].state = K_POLL_STATE_NOT_READY;
-		k_msleep(10);
+		k_msleep(100);
 	}
 } 
 
@@ -1210,8 +1211,7 @@ static void SystemTask()
 {
 	while (1)
 	{
-		printk("System task \n\r");
+		ProcessDeviceState();
 		k_msleep(10);
 	}
-	
 }
