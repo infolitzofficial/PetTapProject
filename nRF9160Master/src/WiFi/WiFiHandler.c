@@ -12,7 +12,12 @@
 /****************************************MACROS************************************************************/
 #define MSG_SIZE 255
 #define BUF_SIZE 255
-#define WIFI_SSID_PWD           "Alcodex,Adx@2013"
+#define WIFI_SSID_PWD       "AdhilXavier,4782991296"
+#define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
+#define AWS_THING 		    "test_aws_iot"
+#define AWS_TOPIC 		    "test_aws_iot/testtopic"
+#define CFG_NUM 	        1
+#define CFG_NAME 	        "latlong"
 
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
@@ -23,13 +28,17 @@ bool bResponse = false;         //For check response received
 
 /*****************************************PRIVATE FUNCTIONS***********************************************/
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
+static void SendTopic(const char *cmd, char *pcArgs[]);
 
 //Table of AT Commands and their handlers
 _sAtCmdHandle sAtCmdHandle[] = {
     //CMD                                           //Handler       //RespHandler        //Arguments
-    {"AT\n\r",                                       SendCommand,     ProcessResponse,   NULL},
-    {"AT+WFMODE=0\n\r",                              SendCommand,     ProcessResponse,   NULL },
-    {"AT+WFJAPA=%s\n\r",                             ConnectToWiFi,   ProcessResponse,   NULL}
+    {"AT\n\r",                                      SendCommand,   ProcessResponse,     {NULL}                   },
+    {"AT+WFMODE=0\n\r",                             SendCommand,   ProcessResponse,     {NULL}                    },
+    {"AT+WFJAPA=%s\n\r",                            ConnectToWiFi, ProcessResponse,     {WIFI_SSID_PWD, NULL,NULL}},
+    {"AT+AWS=SET APP_PUBTOPIC %s\r\n",              SendTopic,     ProcessResponse,     {AWS_TOPIC, NULL, NULL}   },
+    {"AT+AWS=CFG  0 latshad 1 1\r\n",               SendCommand,    ProcessResponse,    {NULL}                    },
+    {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,    ProcessResponse,    {NULL}                    },
 };  
 
 
@@ -96,14 +105,11 @@ void print_uart(const char *buf)
  * @return None
 */
 
-void SendCommand(const char *cmd, const char *pcArgs[])
+void SendCommand(const char *cmd, char *pcArgs[])
 {
-    char cCmdBuf[255];
-    char cMsgCmd[255];
-    uint8_t ucIdx = 0;
-        
+
     print_uart(cmd);
-    k_msleep(500); // Adjust the delay based on the module's response time
+    k_msleep(500); 
 
 }
 
@@ -139,11 +145,11 @@ bool ConfigureAndConnectWiFi()
             {
                 bRcvdData = false;
                 bResponse = false;
-                sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs[0]);
+                sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs);
                 printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
                 TimeNow = sys_clock_tick_get();
 
-                while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 4))
+                while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 15))
                 {
                     if (bRcvdData)
                     {
@@ -261,15 +267,22 @@ bool InitUart(void)
  * @param [out] :
  * @return      :
 */
-void ConnectToWiFi(const char *pcCmd, const char *pcArgs[])
+void ConnectToWiFi(const char *pcCmd, char *pcArgs[])
 {
     char cCmdBuff[50];
-        
-    sprintf(cCmdBuff, "AT+WFJAPA=%s\n\r", WIFI_SSID_PWD); //connect to wifi
-    printk("INFO: Cmd: %s\n\r", cCmdBuff);
-    print_uart(cCmdBuff);
-    k_msleep(500);
 
+    if (pcArgs[0] == NULL)
+    {
+        printk("ERR: Invalid args\n\r");
+        k_msleep(500);
+    }
+    else
+    {
+        sprintf(cCmdBuff, "AT+WFJAPA=%s\n\r", pcArgs[0]); //connect to wifi
+        printk("INFO: Cmd: %s\n\r", cCmdBuff);
+        print_uart(cCmdBuff);
+        k_msleep(500);
+    }
 }
 
 /**
@@ -287,7 +300,6 @@ bool IsWiFiConnected()
     bRcvdData = false;
     strcpy(cCmdBuff, "AT+WFSTA\n\r");
     print_uart(cCmdBuff);
-    //k_msleep(2000);
 
     if (bRcvdData)
     {
@@ -300,5 +312,34 @@ bool IsWiFiConnected()
     }
 
     return bRetVal;
+
+}
+
+static void SendTopic(const char *cmd, char *pcArgs[])
+{
+    char cmdBuf[255];
+
+    if (pcArgs[0] == NULL)
+    {
+        printk("ERR: Invalid args\n\r");
+        k_msleep(500);
+    }
+    else
+    {
+        printk("ARGS: %s \n \r", pcArgs[0]);
+        k_msleep(500);
+        sprintf(cmdBuf, cmd, pcArgs[0]); //send Pub Topic
+        print_uart(cmdBuf);
+        k_msleep(500); // Adjust the delay based on the module's response time
+    }
+
+}
+
+void SendLocation(const char *cmd, char *pcArgs[])
+{
+    char cmdBuf[255];
+    sprintf(cmdBuf, cmd, CFG_NUM, CFG_NAME); //send Pub Topic    //pcArgs[0] not working    
+    print_uart(cmdBuf);
+    k_msleep(500); // Adjust the delay based on the module's response time
 
 }
