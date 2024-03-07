@@ -19,7 +19,7 @@
 #define TICK_RATE               32768
 #define TIMESLOT       TICK_RATE * 15
 
-typedef void (*cmdHandler)(const char *pcCmd, char *pcArgs[]);
+typedef void (*cmdHandler)(const char *pcCmd, char *pcArgs[], int nArgc);
 typedef void (*respHandler)(const char *pcResp, bool *pbStatus);
 
 typedef struct __sAtCmdHandle
@@ -27,17 +27,19 @@ typedef struct __sAtCmdHandle
     const char *pcCmd;
     cmdHandler CmdHdlr;
     respHandler RespHdlr;
+    int  nArgsCount;
     char *pcArgs[5];
 }_sAtCmdHandle;
 
 
 bool InitUart(void);
-void SendCommand(const char *cmd, char *pcArgs[]);
+//void SendCommand(const char *cmd, char *pcArgs[], int nArgc);
 void ProcessResponse(const char *pcResp, bool *pbStatus);
 bool ConfigureAndConnectWiFi();
-void ConnectToWiFi(const char *pcCmd, char *pcArgs[]);
+//void ConnectToWiFi(const char *pcCmd, char *pcArgs[]);
 bool IsWiFiConnected();
-void SendLocation(const char *cmd, char *pcArgs[]);
+bool SendLocation();
+//void SendLocation(const char *cmd);
 
 #endif
 

@@ -25,8 +25,20 @@ typedef enum __eDevState
     DEVICE_IDLE,
 }_eDevState;
 
+typedef struct __sGnssConfig
+{
+    double dLatitude;
+    double dLongitude;
+    bool bLocationUpdated;
+}_sGnssConfig;
+
 /***********************************FUNCTION DECLARATIONS******************/
 void ProcessDeviceState();
 _eDevState *GetDeviceState();
+bool IsLocationDataOK(void);
+void SetLocationDataStatus(bool bStatus);
+bool UpdateLocation(_sGnssConfig *psLocationData);
+void InitTimerTask(int nPeriod);
+_sGnssConfig * GetLocationData();
 
 #endif

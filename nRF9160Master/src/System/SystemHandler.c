@@ -15,6 +15,9 @@
 
 /******************************************TYPEDEFS****************************/
 static _eDevState DevState = DEVICE_IDLE;
+_sGnssConfig sGnssConfig = {0.0,0.0,false};
+struct k_timer Timer;
+static bool TimerExpired = false;
 
 /*****************************************FUNCTION DEFINITION******************/
 void ProcessDeviceState()
@@ -48,11 +51,22 @@ void ProcessDeviceState()
                         }
         case WIFI_CONNECTED:
                         printk("INFO: WIFI CONNECTED\n\r");
+                        InitTimerTask(30);
                         DevState = WIFI_DEVICE;
                         break;
         case WIFI_DEVICE:
-                       
-                        printk("INFO: WIFI MODE\n\r");
+                        if (TimerExpired)
+                        {
+                            if (IsLocationDataOK())
+                            {
+                                if (SendLocation())
+                                {
+                                    printk("INFO: Location sent success\n\r");
+                                    TimerExpired=false;
+                                }
+                            }
+                        }
+                       // printk("INFO: WIFI MODE\n\r");
                        //Do wifi operation
                        //if Disconnected switch to DEVICE_IDLE
                        break;
@@ -74,3 +88,93 @@ _eDevState *GetDeviceState()
     return &DevState;
 }
 
+/**
+ * @brief 
+*/
+_sGnssConfig * GetLocationData()
+{
+    return &sGnssConfig;
+}
+
+/**
+ * @brief 
+*/
+bool UpdateLocation(_sGnssConfig *psLocationData)
+{
+    bool bRetVal = false;
+
+    if (psLocationData)
+    {
+        sGnssConfig.dLatitude  = psLocationData->dLatitude;
+        sGnssConfig.dLongitude = psLocationData->dLongitude;
+        bRetVal = true;
+    }
+
+    return bRetVal;
+}
+
+/**
+ * @brief
+*/
+bool IsLocationDataOK(void)
+{
+    return sGnssConfig.bLocationUpdated;
+}
+
+/**
+ * @brief
+*/
+void SetLocationDataStatus(bool bStatus)
+{
+    sGnssConfig.bLocationUpdated = bStatus;
+}
+
+/**
+ * @brief
+*/
+static void TimerExpiredCb(struct k_timer *timer)
+{
+    //Callback for sending data over Wifi/BLE/LTE
+    switch(DevState)
+    {
+        case WIFI_DEVICE :  printk("INFO: TimerExpired Callback\n\r");
+                            //k_msleep(50);
+                            TimerExpired = true;
+                            break;
+
+        case BLE_DEVICE  :  
+                            // if (IsLocationDataOK())
+                            // {
+                            //     //Send Data to nRf52840                               
+                            // }
+                            break;
+
+        default          :
+                            break;
+    }
+}
+
+/**
+ * @brief
+*/
+static void TimerStoppedCb(struct k_timer *timer)
+{
+    printk("INFO timer stopped\n\r");
+}
+
+/**
+ * @brief
+*/
+void InitTimerTask(int nPeriod)
+{
+    k_timer_init(&Timer, TimerExpiredCb, TimerStoppedCb);
+    k_timer_start(&Timer, K_SECONDS(0), K_SECONDS(nPeriod));
+}
+
+/**
+ * @brief
+*/
+void StopTimer()
+{
+    k_timer_stop(&Timer);
+}

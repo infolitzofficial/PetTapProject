@@ -1096,6 +1096,7 @@ static void GpsTask()
 	uint8_t cnt = 0;
 	uint8_t count = 0;
 	struct nrf_modem_gnss_nmea_data_frame *nmea_data;
+	_sGnssConfig sGnssConfig = {0};
 
 	for (;;) {
 		//NRFX_DELAY_US(2000000);
@@ -1147,6 +1148,7 @@ static void GpsTask()
 			//	printk("satelite flag %d\n",last_pvt.flags);
 				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) {
 					gnss_connected = true;
+					
 					fix_timestamp = k_uptime_get();
 					printf("\n Valid GNSS\n\n\n");
 
@@ -1157,6 +1159,10 @@ static void GpsTask()
 					// }
 					// NRFX_DELAY_US(2000000);
 					print_fix_data(&last_pvt);
+					sGnssConfig.dLatitude = last_pvt.latitude;
+					sGnssConfig.dLongitude = last_pvt.longitude;
+					UpdateLocation(&sGnssConfig);
+					SetLocationDataStatus(true);
 					
 					if(cloud_connected == true && gnss_connected == true)
 					{
@@ -1166,6 +1172,7 @@ static void GpsTask()
 				} else {
 					//printk("satelite flag %d\n",last_pvt.flags);
 					gnss_connected = false;
+					SetLocationDataStatus(false);
 					//printf("Seconds since last fix: %d\n",
 					//       (uint32_t)((k_uptime_get() - fix_timestamp) / 1000));
 						    

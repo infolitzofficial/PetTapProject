@@ -8,11 +8,12 @@
 
 /**********************************************************INCLUDES*****************************************/
 #include "WiFiHandler.h"
+#include "../System/SystemHandler.h"
 #include <string.h>
 /****************************************MACROS************************************************************/
 #define MSG_SIZE 255
 #define BUF_SIZE 255
-#define WIFI_SSID_PWD       "AdhilXavier,4782991296"
+#define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp"
 #define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
 #define AWS_THING 		    "test_aws_iot"
 #define AWS_TOPIC 		    "test_aws_iot/testtopic"
@@ -28,17 +29,20 @@ bool bResponse = false;         //For check response received
 
 /*****************************************PRIVATE FUNCTIONS***********************************************/
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
-static void SendTopic(const char *cmd, char *pcArgs[]);
+static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc);
+static void SendCommand(const char *cmd, char *pcArgs[], int nArgc);
+//static void SetPublishTopic(const char *cmd, char *pcArgs[]);
 
 //Table of AT Commands and their handlers
 _sAtCmdHandle sAtCmdHandle[] = {
-    //CMD                                           //Handler       //RespHandler        //Arguments
-    {"AT\n\r",                                      SendCommand,   ProcessResponse,     {NULL}                   },
-    {"AT+WFMODE=0\n\r",                             SendCommand,   ProcessResponse,     {NULL}                    },
-    {"AT+WFJAPA=%s\n\r",                            ConnectToWiFi, ProcessResponse,     {WIFI_SSID_PWD, NULL,NULL}},
-    {"AT+AWS=SET APP_PUBTOPIC %s\r\n",              SendTopic,     ProcessResponse,     {AWS_TOPIC, NULL, NULL}   },
-    {"AT+AWS=CFG  0 latshad 1 1\r\n",               SendCommand,    ProcessResponse,    {NULL}                    },
-    {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,    ProcessResponse,    {NULL}                    },
+    //CMD                                           //Handler       //RespHandler     //argument cnt    //Arguments
+    {"AT\n\r",                                      SendCommand,     ProcessResponse,       0,            {NULL}                    },
+    {"AT+WFMODE=0\n\r",                             SendCommand,     ProcessResponse,       0,            {NULL}                    },
+    {"AT+WFJAPA=%s\n\r",                            SendCmdWithArgs, ProcessResponse,       1,            {WIFI_SSID_PWD, NULL,NULL}},
+    {"AT+AWS=SET APP_PUBTOPIC %s\r\n",              SendCmdWithArgs, ProcessResponse,       1,            {AWS_TOPIC, NULL, NULL}   },
+    {"AT+AWS=CFG  0 latshad 1 1\r\n",               SendCommand,     ProcessResponse,       0,            {NULL}                    },
+    {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,     ProcessResponse,       0,            {NULL}                    },
+    {"AT+AWS=CFG %d %s 1 0\r\n",                    SendCmdWithArgs, ProcessResponse,       2,            {CFG_NUM, CFG_NAME, NULL} },
 };  
 
 
@@ -104,13 +108,10 @@ void print_uart(const char *buf)
  * @param pcArgs - Arguments
  * @return None
 */
-
-void SendCommand(const char *cmd, char *pcArgs[])
+static void SendCommand(const char *cmd, char *pcArgs[], int nArgc)
 {
-
     print_uart(cmd);
     k_msleep(500); 
-
 }
 
 /**
@@ -145,7 +146,7 @@ bool ConfigureAndConnectWiFi()
             {
                 bRcvdData = false;
                 bResponse = false;
-                sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs);
+                sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
                 printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
                 TimeNow = sys_clock_tick_get();
 
@@ -181,7 +182,6 @@ bool ConfigureAndConnectWiFi()
 */
 void ProcessResponse(const char *pcResp, bool *pbStatus)
 {
-
     if (strstr(pcResp, "OK") != NULL)
     {
         *pbStatus = true;
@@ -190,7 +190,6 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
     {
         *pbStatus = false;
     }  
-  //  memset(rx_buf, 0, sizeof(rx_buf));
 }
 
 /**
@@ -210,8 +209,8 @@ static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus)
         *pbStatus = false;
     }  
 
-    //memset(rx_buf, 0, sizeof(rx_buf));
 }
+
 /**
  * @brief Initialising UART
  * @param None
@@ -259,31 +258,29 @@ bool InitUart(void)
     return bRetVal;
 }
 
+// /**
+//  * @brief       :
+//  * @param [in]  :
+//  * @param [out] :
+//  * @return      :
+// */
+// void ConnectToWiFi(const char *pcCmd, char *pcArgs[], int nArgc)
+// {
+//     char cCmdBuff[50];
 
-
-/**
- * @brief       :
- * @param [in]  :
- * @param [out] :
- * @return      :
-*/
-void ConnectToWiFi(const char *pcCmd, char *pcArgs[])
-{
-    char cCmdBuff[50];
-
-    if (pcArgs[0] == NULL)
-    {
-        printk("ERR: Invalid args\n\r");
-        k_msleep(500);
-    }
-    else
-    {
-        sprintf(cCmdBuff, "AT+WFJAPA=%s\n\r", pcArgs[0]); //connect to wifi
-        printk("INFO: Cmd: %s\n\r", cCmdBuff);
-        print_uart(cCmdBuff);
-        k_msleep(500);
-    }
-}
+//     if (pcArgs[0] == NULL)
+//     {
+//         printk("ERR: Invalid args\n\r");
+//         k_msleep(500);
+//     }
+//     else
+//     {
+//         sprintf(cCmdBuff, "AT+WFJAPA=%s\n\r", pcArgs[0]); //connect to wifi
+//         printk("INFO: Cmd: %s\n\r", cCmdBuff);
+//         print_uart(cCmdBuff);
+//         k_msleep(500);
+//     }
+// }
 
 /**
  * @brief       :
@@ -315,31 +312,107 @@ bool IsWiFiConnected()
 
 }
 
-static void SendTopic(const char *cmd, char *pcArgs[])
+/**
+ * @brief       :
+ * @param [in]  :
+ * @param [out] :
+ * @return      :
+*/
+static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc)
 {
     char cmdBuf[255];
 
-    if (pcArgs[0] == NULL)
+    switch(nArgc)
     {
-        printk("ERR: Invalid args\n\r");
-        k_msleep(500);
-    }
-    else
-    {
-        printk("ARGS: %s \n \r", pcArgs[0]);
-        k_msleep(500);
-        sprintf(cmdBuf, cmd, pcArgs[0]); //send Pub Topic
-        print_uart(cmdBuf);
-        k_msleep(500); // Adjust the delay based on the module's response time
+        case 0: printk("ERR: Invalid args\n\r");
+                k_msleep(500);
+                break;
+
+        case 1:
+                sprintf(cmdBuf, cmd, pcArgs[0]); 
+                break;
+
+        case 2: 
+                sprintf(cmdBuf, cmd, pcArgs[0], pcArgs[1]);
+                break;
+
+        case 3:
+                sprintf(cmdBuf, cmd, pcArgs[0], pcArgs[1], pcArgs[2]);
+                break;
+
+        default:
+                break; 
+
     }
 
-}
-
-void SendLocation(const char *cmd, char *pcArgs[])
-{
-    char cmdBuf[255];
-    sprintf(cmdBuf, cmd, CFG_NUM, CFG_NAME); //send Pub Topic    //pcArgs[0] not working    
     print_uart(cmdBuf);
     k_msleep(500); // Adjust the delay based on the module's response time
+}
 
+// /**
+//  * @brief       :
+//  * @param [in]  :
+//  * @param [out] :
+//  * @return      :
+// */
+// static void SetPublishTopic(const char *cmd, char *pcArgs[], int nArgc)
+// {
+//     char cmdBuf[255];
+
+//     if (pcArgs[0] == NULL)
+//     {
+//         printk("ERR: Invalid args\n\r");
+//         k_msleep(500);
+//     }
+//     else
+//     {
+//         printk("ARGS: %s \n \r", pcArgs[0]);
+//         k_msleep(500);
+//         sprintf(cmdBuf, cmd, pcArgs[0]); //send Pub Topic
+//         print_uart(cmdBuf);
+//         k_msleep(500); // Adjust the delay based on the module's response time
+//     }
+// }
+
+// /**
+//  * @brief       :
+//  * @param [in]  :
+//  * @param [out] :
+//  * @return      :
+// */
+// void SendLocation(const char *cmd, char *pcArgs[])
+// {
+//     char cmdBuf[255];
+//     sprintf(cmdBuf, cmd, CFG_NUM, CFG_NAME); //send Pub Topic    //pcArgs[0] not working    
+//     print_uart(cmdBuf);
+//     k_msleep(500); // Adjust the delay based on the module's response time
+
+// }
+
+/**
+ * @brief       :
+ * @param [in]  :
+ * @param [out] :
+ * @return      :
+*/
+bool SendLocation()
+{
+    _sGnssConfig *psLocationData = NULL;
+    bool bRetVal = false;
+    char cPayload[50];
+    char cATcmd[100];
+
+    psLocationData = GetLocationData();
+
+    if (psLocationData)
+    {
+        sprintf(cPayload,"%.6f,%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+        printk("sending data: %s\n\r", cPayload);
+        sprintf(cATcmd, "AT+AWS=CMD MCU_DATA %d %s %s\r\n", CFG_NUM, CFG_NAME, cPayload);
+        print_uart(cATcmd);
+        k_msleep(500);
+        bRetVal = true;
+    }
+
+    return bRetVal;
 }
