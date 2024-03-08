@@ -6,20 +6,26 @@
  * @ref    : SystemHandler.h
 */
 
-/******************************************INCLUDES*****************************/
+/*******************************************INCLUDES********************************************************/
 #include "SystemHandler.h"
 #include "../WiFi/WiFiHandler.h"
 
-/******************************************MACROS******************************/
+/*******************************************MACROS**********************************************************/
 
 
-/******************************************TYPEDEFS****************************/
+/******************************************TYPEDEFS*********************************************************/
 static _eDevState DevState = DEVICE_IDLE;
 _sGnssConfig sGnssConfig = {0.0,0.0,false};
 struct k_timer Timer;
 static bool TimerExpired = false;
 
-/*****************************************FUNCTION DEFINITION******************/
+/*****************************************FUNCTION DEFINITION***********************************************/
+/**
+ * @brief       : Process Device state of MASTER device
+ * @param [in]  : None
+ * @param [out] : none
+ * @return      : None
+*/
 void ProcessDeviceState()
 {
     uint32_t TimeNow = 0;
@@ -27,61 +33,68 @@ void ProcessDeviceState()
     switch(DevState)
     {
         case DEVICE_IDLE:
-                        //Perform Connection
+                    //Perform Connection
+                    printk("INFO: IDLE STATE\n\r");
 
-                       // TimeNow = sys_clock_tick_get();
-                       printk("INFO: IDLE STATE\n\r");
+                    if (ConfigureAndConnectWiFi())
+                    {
+                        DevState = WAIT_CONNECTION;
+                    }
+                    else
+                    {
+                        printk("INFO: WiFi Conn failed\n\r");
+                    }
+                    break;
 
-
-                        if (ConfigureAndConnectWiFi())
-                        {
-                            DevState = WAIT_CONNECTION;
-                        }
-                        else
-                        {
-                            printk("INFO: WiFi Conn failed\n\r");
-                        }
-
-                        break;
         case WAIT_CONNECTION:
-                        printk("INFO: CONN WAIT\n\r");
-                        if(IsWiFiConnected())
-                        {
-                            DevState = WIFI_CONNECTED;
-                        }
+                    printk("INFO: CONN WAIT\n\r");
+                    if(IsWiFiConnected())
+                    {
+                        DevState = WIFI_CONNECTED;
+                    }
+                    break;
+
         case WIFI_CONNECTED:
-                        printk("INFO: WIFI CONNECTED\n\r");
-                        InitTimerTask(30);
-                        DevState = WIFI_DEVICE;
-                        break;
+                    printk("INFO: WIFI CONNECTED\n\r");
+                    InitTimerTask(30);
+                    DevState = WIFI_DEVICE;
+                    break;
+
         case WIFI_DEVICE:
-                        if (TimerExpired)
+                    if (TimerExpired)
+                    {
+                        if (IsLocationDataOK())
                         {
-                            if (IsLocationDataOK())
+                            if (SendLocation())
                             {
-                                if (SendLocation())
-                                {
-                                    printk("INFO: Location sent success\n\r");
-                                    TimerExpired=false;
-                                }
+                                printk("INFO: Location sent success\n\r");
+                                TimerExpired=false;
                             }
                         }
-                       // printk("INFO: WIFI MODE\n\r");
-                       //Do wifi operation
-                       //if Disconnected switch to DEVICE_IDLE
-                       break;
+                    }
+                    //Do wifi operation
+                    //if Disconnected switch to DEVICE_IDLE
+                    break;
+
         case BLE_CONNECTED:
-                        DevState = BLE_DEVICE;
-                        break;
+                    DevState = BLE_DEVICE;
+                    break;
+
         case BLE_DEVICE:
-                       //Do BLE operation
-                       //if Disconnected switch to DEVICE_IDLE
-                       break;
+                    //Do BLE operation
+                    //if Disconnected switch to DEVICE_IDLE
+                    break;
+
+        default        :
+                    break;
     }
 }
 
 /**
- * @brief
+ * @brief       : Get current device state
+ * @param [in]  : None
+ * @param [out] : none
+ * @return      : Current device state
 */
 _eDevState *GetDeviceState()
 {
@@ -89,7 +102,11 @@ _eDevState *GetDeviceState()
 }
 
 /**
- * @brief 
+ * @brief       : Get location data 
+ * @param [in]  : None
+ * @param [out] : none
+ * @return      : Current GNSS config containing location data
+ *                (Will update the name of return parameter later)
 */
 _sGnssConfig * GetLocationData()
 {
@@ -97,7 +114,10 @@ _sGnssConfig * GetLocationData()
 }
 
 /**
- * @brief 
+ * @brief       : Update location read from GNSS to GNSS config
+ * @param [in]  : None
+ * @param [out] : psLocationData - Location data
+ * @return      : true for success
 */
 bool UpdateLocation(_sGnssConfig *psLocationData)
 {
@@ -114,7 +134,10 @@ bool UpdateLocation(_sGnssConfig *psLocationData)
 }
 
 /**
- * @brief
+ * @brief       : Checking received location data is valid
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool IsLocationDataOK(void)
 {
@@ -122,7 +145,10 @@ bool IsLocationDataOK(void)
 }
 
 /**
- * @brief
+ * @brief       : Setting status of GNSS location fix
+ * @param [in]  : bStatus - status of the location fix
+ * @param [out] : None
+ * @return      : true for success
 */
 void SetLocationDataStatus(bool bStatus)
 {
@@ -130,7 +156,10 @@ void SetLocationDataStatus(bool bStatus)
 }
 
 /**
- * @brief
+ * @brief       : Timer task expired callback
+ * @param [in]  : None
+ * @param [out] : timer - timer handle
+ * @return      : None
 */
 static void TimerExpiredCb(struct k_timer *timer)
 {
@@ -155,7 +184,10 @@ static void TimerExpiredCb(struct k_timer *timer)
 }
 
 /**
- * @brief
+ * @brief       : Timer task stopped callback
+ * @param [in]  : None
+ * @param [out] : timer - timer handle
+ * @return      : None
 */
 static void TimerStoppedCb(struct k_timer *timer)
 {
@@ -163,7 +195,10 @@ static void TimerStoppedCb(struct k_timer *timer)
 }
 
 /**
- * @brief
+ * @brief       : Initialise and start Timer task 
+ * @param [in]  : nPeriod - period of timer 
+ * @param [out] : None
+ * @return      : None
 */
 void InitTimerTask(int nPeriod)
 {
@@ -172,7 +207,10 @@ void InitTimerTask(int nPeriod)
 }
 
 /**
- * @brief
+ * @brief       : Stop Timer task 
+ * @param [in]  : None 
+ * @param [out] : None
+ * @return      : None
 */
 void StopTimer()
 {

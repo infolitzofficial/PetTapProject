@@ -1,20 +1,21 @@
 /**
- * @file    WiFiHandler.h
- * @brief   WiFi related functions are defined here
- * @author  Jeslin
- * @date    15-01-2024
- * @see     WiFIHandler.c
+ * @file    : SystemHandler.h
+ * @brief   : File contains System handler related functions
+ * @author  : Adhil
+ * @date    : 06-03-2024
+ * @see     : SystemHandler.c
+ * @note
 */
 
 #ifndef _SYSTEM_HANDLER_H
 #define _SYSTEM_HANDLER_H
-/***************************INCLUDES*********************************/
+/*********************************************INCLUDES***************************************************/
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-/*****************************TYPEDEFS******************************/
+/*********************************************TYPEDEFS***************************************************/
 typedef enum __eDevState
 {
     WIFI_CONNECTED,
@@ -32,7 +33,7 @@ typedef struct __sGnssConfig
     bool bLocationUpdated;
 }_sGnssConfig;
 
-/***********************************FUNCTION DECLARATIONS******************/
+/**********************************************FUNCTION DECLARATIONS*************************************/
 void ProcessDeviceState();
 _eDevState *GetDeviceState();
 bool IsLocationDataOK(void);

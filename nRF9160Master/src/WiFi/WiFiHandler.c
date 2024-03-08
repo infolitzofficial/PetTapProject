@@ -1,19 +1,20 @@
 /**
- * @file WiFiHandler.c
- * @brief File contains WiFi related functions
- * @author Jeslin
- * @date 15-01-2024
+ * @file    : WiFiHandler.c
+ * @brief   : File contains WiFi related functions
+ * @author  : Adhil
+ * @date    : 06-03-2024
  * @note
 */
 
-/**********************************************************INCLUDES*****************************************/
+/*******************************************INCLUDES********************************************************/
 #include "WiFiHandler.h"
 #include "../System/SystemHandler.h"
 #include <string.h>
-/****************************************MACROS************************************************************/
+
+/*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
 #define BUF_SIZE 255
-#define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp"
+#define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp" //Change this line with SSID and password of choice
 #define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
 #define AWS_THING 		    "test_aws_iot"
 #define AWS_TOPIC 		    "test_aws_iot/testtopic"
@@ -31,7 +32,6 @@ bool bResponse = false;         //For check response received
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
 static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc);
 static void SendCommand(const char *cmd, char *pcArgs[], int nArgc);
-//static void SetPublishTopic(const char *cmd, char *pcArgs[]);
 
 //Table of AT Commands and their handlers
 _sAtCmdHandle sAtCmdHandle[] = {
@@ -48,10 +48,10 @@ _sAtCmdHandle sAtCmdHandle[] = {
 
 /******************************************FUNCTION DEFINITIONS******************************************/
 /**
- * @brief Callback for UART Receive Interrupt
- * @param dev - UART device
- * @param user_data - User data
- * @return None
+ * @brief       : Callback function for UART reception
+ * @param [in]  : dev - UART handle 
+ * @param [out] : user_data - arguments to UART callback
+ * @return      : None
 */
 void serial_cb(const struct device *dev, void *user_data)
 {
@@ -87,9 +87,10 @@ void serial_cb(const struct device *dev, void *user_data)
 }
 
 /**
- * @brief Print message on UART
- * @param buf - Message
- * @return None
+ * @brief       : UART send function
+ * @param [in]  : buf - Holds data to send over UART 
+ * @param [out] : None
+ * @return      : None
 */
 void print_uart(const char *buf)
 {
@@ -103,10 +104,11 @@ void print_uart(const char *buf)
 
 
 /**
- * @brief Call back function for send command to the module
- * @param cmd - Command
- * @param pcArgs - Arguments
- * @return None
+ * @brief       : Callback function for sending AT command
+ * @param [in]  : cmd - AT command 
+ *              : nArgc - argument count
+ * @param [out] : pcArgs - arguments to AT command
+ * @return      : None
 */
 static void SendCommand(const char *cmd, char *pcArgs[], int nArgc)
 {
@@ -115,9 +117,11 @@ static void SendCommand(const char *cmd, char *pcArgs[], int nArgc)
 }
 
 /**
- * @brief Sending message to the module
- * @param None
- * @return true for success
+ * @brief       : Configure and attempt connection to WiFi. Configuration
+ *                includes AWS configurations also
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool ConfigureAndConnectWiFi()
 {
@@ -176,9 +180,10 @@ bool ConfigureAndConnectWiFi()
 }
 
 /**
- * @brief Checking the response from the module
- * @param pcResp - Response from the module
- * @param pbStatus - Status of the response
+ * @brief       : Process AT command response from WiFi module
+ * @param [in]  : pcResp - AT command response
+ * @param [out] : pbStatus - AT command stauts true for success else failed
+ * @return      : None
 */
 void ProcessResponse(const char *pcResp, bool *pbStatus)
 {
@@ -193,9 +198,10 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
 }
 
 /**
- * @brief Checking the response from the module
- * @param pcResp - Response from the module
- * @param pbStatus - Status of the response
+ * @brief       : Checking connection status from WiFi
+ * @param [in]  : pcResp - AT command response
+ * @param [out] : pbStatus - AT command stauts true for success else failed
+ * @return      : None
 */
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus)
 {
@@ -212,9 +218,10 @@ static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus)
 }
 
 /**
- * @brief Initialising UART
- * @param None
- * @return true for success
+ * @brief       : Initialise UART channel for WIFI interfacing
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool InitUart(void)
 {
@@ -258,35 +265,11 @@ bool InitUart(void)
     return bRetVal;
 }
 
-// /**
-//  * @brief       :
-//  * @param [in]  :
-//  * @param [out] :
-//  * @return      :
-// */
-// void ConnectToWiFi(const char *pcCmd, char *pcArgs[], int nArgc)
-// {
-//     char cCmdBuff[50];
-
-//     if (pcArgs[0] == NULL)
-//     {
-//         printk("ERR: Invalid args\n\r");
-//         k_msleep(500);
-//     }
-//     else
-//     {
-//         sprintf(cCmdBuff, "AT+WFJAPA=%s\n\r", pcArgs[0]); //connect to wifi
-//         printk("INFO: Cmd: %s\n\r", cCmdBuff);
-//         print_uart(cCmdBuff);
-//         k_msleep(500);
-//     }
-// }
-
 /**
- * @brief       :
- * @param [in]  :
- * @param [out] :
- * @return      :
+ * @brief       : Check if WiFi is connected 
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool IsWiFiConnected()
 {
@@ -313,10 +296,11 @@ bool IsWiFiConnected()
 }
 
 /**
- * @brief       :
- * @param [in]  :
- * @param [out] :
- * @return      :
+ * @brief       : Callback for sending command with arguments
+ * @param [in]  : cmd - AT command
+ *                nArgc - argument count
+ * @param [out] : pcArgs - arguments to the callback
+ * @return      : None
 */
 static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc)
 {
@@ -349,51 +333,11 @@ static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc)
     k_msleep(500); // Adjust the delay based on the module's response time
 }
 
-// /**
-//  * @brief       :
-//  * @param [in]  :
-//  * @param [out] :
-//  * @return      :
-// */
-// static void SetPublishTopic(const char *cmd, char *pcArgs[], int nArgc)
-// {
-//     char cmdBuf[255];
-
-//     if (pcArgs[0] == NULL)
-//     {
-//         printk("ERR: Invalid args\n\r");
-//         k_msleep(500);
-//     }
-//     else
-//     {
-//         printk("ARGS: %s \n \r", pcArgs[0]);
-//         k_msleep(500);
-//         sprintf(cmdBuf, cmd, pcArgs[0]); //send Pub Topic
-//         print_uart(cmdBuf);
-//         k_msleep(500); // Adjust the delay based on the module's response time
-//     }
-// }
-
-// /**
-//  * @brief       :
-//  * @param [in]  :
-//  * @param [out] :
-//  * @return      :
-// */
-// void SendLocation(const char *cmd, char *pcArgs[])
-// {
-//     char cmdBuf[255];
-//     sprintf(cmdBuf, cmd, CFG_NUM, CFG_NAME); //send Pub Topic    //pcArgs[0] not working    
-//     print_uart(cmdBuf);
-//     k_msleep(500); // Adjust the delay based on the module's response time
-
-// }
-
 /**
- * @brief       :
- * @param [in]  :
- * @param [out] :
- * @return      :
+ * @brief       : function for sending location data over WiFi
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool SendLocation()
 {
