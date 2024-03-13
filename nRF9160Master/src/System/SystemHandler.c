@@ -9,6 +9,7 @@
 /*******************************************INCLUDES********************************************************/
 #include "SystemHandler.h"
 #include "../WiFi/WiFiHandler.h"
+#include "../PacketHandler/PacketHandler.h"
 
 /*******************************************MACROS**********************************************************/
 
@@ -20,6 +21,30 @@ struct k_timer Timer;
 static bool TimerExpired = false;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
+/**
+ * @brief       : Connect to a 52840 device 
+ * @param [in]  : None
+ * @param [out] : none
+ * @return      : true for success
+*/
+static bool ConnectToBLE()
+{
+    uint8_t ucPayload[255] = {0};
+    _sPacket sPacket = {0};
+    bool bRetVal = false;
+
+    strcpy((char *)ucPayload, "CONNECT");
+
+    if (BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload)))
+    {
+        SendBleMsg((uint8_t *)&sPacket, sizeof(_sPacket));
+        free(sPacket.pucPayload);
+        bRetVal = true;
+    }
+
+    return bRetVal;
+}
+
 /**
  * @brief       : Process Device state of MASTER device
  * @param [in]  : None
@@ -42,8 +67,19 @@ void ProcessDeviceState()
                     }
                     else
                     {
-                        printk("INFO: WiFi Conn failed\n\r");
+                        printk("ERR: WiFi Conn failed\n\r");
                     }
+
+                    printk("Info: befor ble connect\n\r");
+                    if (ConnectToBLE())
+                    {
+                        DevState = WAIT_CONNECTION;
+                    }
+                    else
+                    {
+                        printk("ERR: BLE Conn failed\n\r");                        
+                    }
+
                     break;
 
         case WAIT_CONNECTION:

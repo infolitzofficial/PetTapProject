@@ -142,10 +142,10 @@ bool ConfigureAndConnectWiFi()
             break;
         }
         
-        nRetry = 3;
+        nRetry = 2;
 
-        do
-        {
+      //  do
+      //  {
             do
             {
                 bRcvdData = false;
@@ -170,8 +170,14 @@ bool ConfigureAndConnectWiFi()
                 }
 
             }while((nRetry--) > 0);
+
+            if (!bRetVal)
+            {
+                break;
+            }
         Cmplt://NoP
-        } while(bRcvdData == false);
+       // }
+        //} while(bRcvdData == false);
 
     }
 

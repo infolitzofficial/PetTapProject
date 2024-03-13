@@ -1019,6 +1019,7 @@ int main(void)
 	int err;
 	cJSON_Init();
 	InitUart();
+	InitBleUart();
 
 	LOG_INF("Starting GNSS AWS sample");
 
