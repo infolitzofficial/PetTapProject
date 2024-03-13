@@ -38,7 +38,6 @@ static bool ConnectToBLE()
     if (BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload)))
     {
         SendBleMsg((uint8_t *)&sPacket, sizeof(_sPacket));
-        free(sPacket.pucPayload);
         bRetVal = true;
     }
 
@@ -51,9 +50,34 @@ static bool ConnectToBLE()
  * @param [out] : none
  * @return      : None
 */
+void PollMsgs()
+{
+    uint32_t TimeNow = 0;
+    uint8_t ucBuff[255];
+    _sPacket sPacket = {0};
+
+    if (ReadPacket(ucBuff))
+    {
+        printk("Received packet\n\r");
+
+        if (ParsePacket(ucBuff, &sPacket))
+        {
+            ProcessRcvdPacket(&sPacket);
+        }
+    }
+}
+
+/**
+ * @brief       : Process Device state of MASTER device
+ * @param [in]  : None
+ * @param [out] : none
+ * @return      : None
+*/
 void ProcessDeviceState()
 {
     uint32_t TimeNow = 0;
+
+    PollMsgs();
 
     switch(DevState)
     {
@@ -61,14 +85,14 @@ void ProcessDeviceState()
                     //Perform Connection
                     printk("INFO: IDLE STATE\n\r");
 
-                    if (ConfigureAndConnectWiFi())
-                    {
-                        DevState = WAIT_CONNECTION;
-                    }
-                    else
-                    {
-                        printk("ERR: WiFi Conn failed\n\r");
-                    }
+                    // if (ConfigureAndConnectWiFi())
+                    // {
+                    //     DevState = WAIT_CONNECTION;
+                    // }
+                    // else
+                    // {
+                    //     printk("ERR: WiFi Conn failed\n\r");
+                    // }
 
                     printk("Info: befor ble connect\n\r");
                     if (ConnectToBLE())
@@ -83,7 +107,7 @@ void ProcessDeviceState()
                     break;
 
         case WAIT_CONNECTION:
-                    printk("INFO: CONN WAIT\n\r");
+                    //printk("INFO: CONN WAIT\n\r");
                     if(IsWiFiConnected())
                     {
                         DevState = WIFI_CONNECTED;
@@ -135,6 +159,17 @@ void ProcessDeviceState()
 _eDevState *GetDeviceState()
 {
     return &DevState;
+}
+
+/**
+ * @brief       : Set current device state
+ * @param [in]  : DeviceState - DeviceState
+ * @param [out] : none
+ * @return      : Current device state
+*/
+void SetDeviceState(_eDevState DeviceState)
+{
+    DevState = DeviceState;
 }
 
 /**

@@ -18,10 +18,10 @@
 /*********************************************TYPEDEFS***************************************************/
 typedef enum __eDevState
 {
-    DEVICE_IDLE,
-    DEVICE_CONNECTED,
-    DEVICE_ACTIVE,
-    DEVICE_DISCONNECTED,
+    BLE_IDLE,
+    BLE_CONN_REQ,
+    BLE_CONNECTED,
+    BLE_DISCONNECTED,
 }_eDevState;
 
 /**********************************************FUNCTION DECLARATIONS*************************************/

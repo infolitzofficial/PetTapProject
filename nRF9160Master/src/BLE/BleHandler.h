@@ -18,9 +18,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*********************************************MACROS******************************************************/
-// #define TICK_RATE               32768
-// #define TIMESLOT       TICK_RATE * 15
+/*********************************************************MACROS**************************************************/
+#define BUFFER_SIZE           1024
+
+/*********************************************************TYPEDEFS************************************************/
+
+typedef enum __eUartRxState
+{
+    START,
+    RCV,
+    END
+}_eUartRxState;
 
 /**********************************************TYPEDEFS***************************************************/
 
@@ -28,7 +36,8 @@
 /***********************************************FUNCTION DECLARATIONS**************************************/
 bool InitBleUart(void);
 void SendBleMsg(uint8_t *pucBuff, uint16_t usLen);
-
+bool ReadPacket(uint8_t *pucBuffer);
+bool ReadBuffer(void);
 #endif
 
 //EOF

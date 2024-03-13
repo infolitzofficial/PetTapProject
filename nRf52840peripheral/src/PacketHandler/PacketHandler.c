@@ -10,7 +10,6 @@
 
 /*******************************************************MACROS*****************************************************/
 #define nRF52840
-
 /*******************************************************TYPEDEFS***************************************************/
 
 /*******************************************************PRIVATE VARIABLES******************************************/
@@ -28,18 +27,19 @@
  *             : pucPayload - Payload to send
  * @return     : returns true on success
 */
-bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType, uint8_t *pucPayload, uint16_t usLen)
+bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType, 
+                uint8_t *pucPayload, uint16_t usPayloadLen)
 {
     bool bRetVal = false;
-
+    
+    printk("Length of payload: %d\n\r", usPayloadLen);
     if (psPacket && pucPayload)
     {
         psPacket->ucStartByte = START_BYTE;
         psPacket->PacketType = PcktType;
-        psPacket->pucPayload = (uint8_t *)malloc(usLen);
-        memcpy(psPacket->pucPayload, pucPayload, usLen);
+        memcpy(psPacket->pucPayload, pucPayload, usPayloadLen);
+        psPacket->usLen = usPayloadLen;
         psPacket->ucEndByte = END_BYTE;
-
         bRetVal = true;
     }
 
@@ -59,6 +59,11 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
 
     if (pucRcvdBuffer && psPacket)
     {
+        printk("Inside parse packet\n\r");
+        for (int i=0; i <=sizeof(_sPacket); i++)
+        {
+            printk("%02x ", pucRcvdBuffer[i]);
+        }
         memcpy(psPacket, pucRcvdBuffer, sizeof(_sPacket));
         bRetVal = true;
     }
@@ -81,13 +86,13 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
     {
         switch (psPacket->PacketType)
         {
-            case CMD : //ProcessCmd
+            case CMD : ProcessCmd(psPacket->pucPayload);
                     break;
-            case RESP: //ProcessResponse
+            case RESP: ProcessResponse(psPacket->pucPayload);
                     break;
             case DATA: //ProcessData
                     break;
-            case ACK:  //ProcessAcknowlodge
+            case ACK:  //ProcessAcknowledge(psPacket->pucPayload);
                     break;
             default  :
                     break;
@@ -114,7 +119,7 @@ bool ProcessCmd(char *pcCmd)
         if (strcmp(pcCmd, "CONNECT") == 0)
         {
 #ifdef nRF52840            
-            SetDeviceState(DEVICE_CONNECTED);
+            SetDeviceState(BLE_CONN_REQ);
 #endif
         }
     }
@@ -126,18 +131,16 @@ bool ProcessCmd(char *pcCmd)
  * @param [out]: None
  * @return     : true for success
 */
-bool ProcessResp(char *pcResp)
+bool ProcessResponse(char *pcResp)
 {
     bool bRetVal = false;
 
     if (pcResp)
     {
-        if (strcmp(pcResp, "CONN_OK") == 0)
+        if (strcmp(pcResp, "ACK") == 0)
         {
-            //Process Response
+            bRetVal = true;
         }
-
-        bRetVal = true;
     }
 
     return bRetVal;
@@ -161,24 +164,24 @@ bool ProcessPayload(char *pcPayload)
     return bRetVal;
 }
 
-/**
- * @brief      : Process acknowledge
- * @param [in] : pcMsg - acknowledgement message
- * @param [out]: None
- * @return     : true for success
-*/
-bool ProcessAcknowledge(char *pcMsg)
-{
-    bool bRetVal = false;
-    _eDevState *pDevState = NULL;
+// /**
+//  * @brief      : Process acknowledge
+//  * @param [in] : pcMsg - acknowledgement message
+//  * @param [out]: None
+//  * @return     : true for success
+// */
+// bool ProcessAcknowledge(char *pcMsg)
+// {
+//     bool bRetVal = false;
+//     _eDevState *pDevState = NULL;
 
-    if (pcMsg)
-    {
-        if (strcmp(pcMsg, "OK") == 0)
-        {
-            bRetVal = true;
-        }
-    }
+//     if (pcMsg)
+//     {
+//         if (strcmp(pcMsg, "OK") == 0)
+//         {
+//             bRetVal = true;
+//         }
+//     }
 
-    return bRetVal;
-}
+//     return bRetVal;
+// }

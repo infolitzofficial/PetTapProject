@@ -17,7 +17,7 @@
 
 
 /******************************************TYPEDEFS*********************************************************/
-static _eDevState DevState = DEVICE_IDLE;
+static _eDevState DevState = BLE_IDLE;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
@@ -35,33 +35,50 @@ void PollMsgs()
     if (ReadPacket(ucBuff))
     {
         printk("Received packet\n\r");
+
         if (ParsePacket(ucBuff, &sPacket))
         {
             ProcessRcvdPacket(&sPacket);
         }
     }
-
 }
 
 
 void ProcessDeviceState()
 {
+    _sPacket sPacket = {0};
+    uint8_t ucPayload[255];
+
     switch(DevState)
     {
-        case DEVICE_IDLE:
+        case BLE_IDLE:
                     //Perform Connection
                     break;
 
-        case DEVICE_CONNECTED:
+        case BLE_CONN_REQ:
+                    printk("In device connected\n\r");
+                    if (IsConnected())
+                    {
+                        strcpy((char *)ucPayload, "ACK");
+                        BuildPacket(&sPacket, RESP, ucPayload, strlen((char *)ucPayload));
+                    }
+                    else
+                    {
+                        strcpy((char *)ucPayload, "NACK");
+                        SetDeviceState(BLE_IDLE);
+                        BuildPacket(&sPacket, RESP, ucPayload, strlen((char *)ucPayload));
+                    }
+                    SendData((uint8_t *)&sPacket, sizeof(sPacket));
+                    break;
+        case BLE_CONNECTED:
                     if (IsNotificationenabled())
                     {
-                        
+                        //Do update location data received
                     }
                     break;
 
-        case DEVICE_DISCONNECTED:
-                    //Do wifi operation
-                    //if Disconnected switch to DEVICE_IDLE
+        case BLE_DISCONNECTED:
+
                     break;
 
         default        :

@@ -17,9 +17,14 @@
 
 /******************************************PRIVATE GLOBALS**************************************************/
 static const struct device *BleUart = DEVICE_DT_GET(DT_NODELABEL(uart2));
-static char rx_buf[MSG_SIZE];
-static int rx_buf_pos;
-static bool bRcvdData = false;  //For check received data
+/*Buffer for UART receive data*/
+static uint8_t cRxBuffer[BUFFER_SIZE] = {0};
+/*State of UART receive*/
+static _eUartRxState eUartRxState = START;
+/*Index of LoRa packet receive*/
+static uint16_t usRxBufferIdx = 0;
+/*Flag for LORA packet receive completion*/
+static bool bRxCmplt = false;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
@@ -44,19 +49,59 @@ void BleReceptionCb(const struct device *dev, void *user_data)
         return;
     }
 
-    while (uart_fifo_read(BleUart, &c, 1) == 1)
+    if (!ReadBuffer())
     {
-        if ((c == '\r') && rx_buf_pos > 0)
-        {
-            rx_buf[rx_buf_pos] = '\0';
-            bRcvdData = true;
-            rx_buf_pos = 0;
-        }
-        else if (rx_buf_pos < (sizeof(rx_buf) - 1))
-        {
-            rx_buf[rx_buf_pos++] = c;
-        }
+        printk("Uart reception failed\n\r");
     }
+}
+
+
+/**
+ * @brief Read data from Rx buffer
+ * @param None
+ * @return true for success
+*/
+bool ReadBuffer(void)
+{
+    uint8_t ucByte = 0;
+    bool bRetval = false;
+
+printk("In uart callback \n\r");
+    if (uart_fifo_read(BleUart, &ucByte, 1) == 1)
+    {
+        printk("%02x \n\r", ucByte);
+        switch(eUartRxState)
+        {
+            case START: if (ucByte == '*')
+                        {
+                            usRxBufferIdx = 0;
+                            memset(cRxBuffer, 0, sizeof(cRxBuffer));
+                            cRxBuffer[usRxBufferIdx++] = ucByte;
+                            eUartRxState = RCV;
+                        }
+                        break;
+
+            case RCV:   if (ucByte == '#')
+                        {
+                            cRxBuffer[usRxBufferIdx++] = ucByte;
+                            cRxBuffer[usRxBufferIdx++] = '\0';
+                            bRxCmplt = true;
+                            eUartRxState = START;
+                            printk(".\n\r");
+                        }
+                        cRxBuffer[usRxBufferIdx++] = ucByte;
+                        break;
+
+            case END:   eUartRxState = START;
+                        usRxBufferIdx = 0;
+                        break;
+
+            default:    break;            
+        }
+        bRetval = true;
+    }
+ 
+    return bRetval;
 }
 
 /**
@@ -116,10 +161,11 @@ bool InitBleUart(void)
 void SendBleMsg(uint8_t *pucBuff, uint16_t usLen)
 {
     //int msg_len = strlen(buf);
-
-    for (int i = 0; i < usLen; i++)
+    printk("MsgLen: %d\n\r", usLen);
+    for (int i = 0; i <= usLen; i++)
     {
         uart_poll_out(BleUart, pucBuff[i]);
+        k_msleep(5);
     }
 }
 
@@ -139,4 +185,23 @@ void ProcessBleResponse(const char *pcResp, bool *pbStatus)
     {
         *pbStatus = false;
     }  
+}
+
+/**
+ * @brief Read LoRa packet
+ * @param pucBuffer : LoRa packet buffer
+ * @return true for success
+*/
+bool ReadPacket(uint8_t *pucBuffer)
+{
+    bool bRetVal = false;
+
+    if (bRxCmplt)
+    {
+        memcpy(pucBuffer, cRxBuffer, usRxBufferIdx);
+        bRxCmplt = false;
+        bRetVal = true;
+    }
+
+    return bRetVal;
 }

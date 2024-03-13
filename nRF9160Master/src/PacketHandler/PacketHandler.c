@@ -27,18 +27,19 @@
  *             : pucPayload - Payload to send
  * @return     : returns true on success
 */
-bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType, uint8_t *pucPayload, uint16_t usLen)
+bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType, 
+                uint8_t *pucPayload, uint16_t usPayloadLen)
 {
     bool bRetVal = false;
-
+    
+    printk("Length of payload: %d\n\r", usPayloadLen);
     if (psPacket && pucPayload)
     {
         psPacket->ucStartByte = START_BYTE;
         psPacket->PacketType = PcktType;
-        psPacket->pucPayload = (uint8_t *)malloc(usLen);
-        memcpy(psPacket->pucPayload, pucPayload, usLen);
+        memcpy(psPacket->pucPayload, pucPayload, usPayloadLen);
+        psPacket->usLen = usPayloadLen;
         psPacket->ucEndByte = END_BYTE;
-
         bRetVal = true;
     }
 
@@ -82,7 +83,7 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
         {
             case CMD : //ProcessCmd
                     break;
-            case RESP: //ProcessResponse
+            case RESP: ProcessResp(psPacket->pucPayload);
                     break;
             case DATA: //ProcessData
                     break;
@@ -128,15 +129,22 @@ bool ProcessCmd(char *pcCmd)
 bool ProcessResp(char *pcResp)
 {
     bool bRetVal = false;
+    _eDevState *pDevState = 0;
 
     if (pcResp)
     {
-        if (strcmp(pcResp, "CONN_OK") == 0)
+        if (strcmp(pcResp, "ACK") == 0)
         {
-            //Process Response
-        }
+            pDevState = GetDeviceState();
 
-        bRetVal = true;
+            switch(*pDevState)
+            {
+                case WAIT_CONNECTION:
+                                    SetDeviceState(BLE_CONNECTED);
+                                    break;
+            }
+            bRetVal = true;
+        }
     }
 
     return bRetVal;
@@ -160,24 +168,24 @@ bool ProcessPayload(char *pcPayload)
     return bRetVal;
 }
 
-/**
- * @brief      : Process acknowledge
- * @param [in] : pcMsg - acknowledgement message
- * @param [out]: None
- * @return     : true for success
-*/
-bool ProcessAcknowledge(char *pcMsg)
-{
-    bool bRetVal = false;
-    _eDevState *pDevState = NULL;
+// /**
+//  * @brief      : Process acknowledge
+//  * @param [in] : pcMsg - acknowledgement message
+//  * @param [out]: None
+//  * @return     : true for success
+// */
+// bool ProcessAcknowledge(char *pcMsg)
+// {
+//     bool bRetVal = false;
+//     _eDevState *pDevState = NULL;
 
-    if (pcMsg)
-    {
-        if (strcmp(pcMsg, "OK") == 0)
-        {
-            bRetVal = true;
-        }
-    }
+//     if (pcMsg)
+//     {
+//         if (strcmp(pcMsg, "OK") == 0)
+//         {
+//             bRetVal = true;
+//         }
+//     }
 
-    return bRetVal;
-}
+//     return bRetVal;
+// }
