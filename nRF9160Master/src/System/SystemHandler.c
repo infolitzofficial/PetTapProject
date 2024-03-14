@@ -123,7 +123,6 @@ void ProcessDeviceState()
         case WIFI_DEVICE:
                     if (TimerExpired)
                     {
-
                         if (IsLocationDataOK())
                         {
                             if (SendLocation())
@@ -132,7 +131,6 @@ void ProcessDeviceState()
                                 TimerExpired=false;
                             }
                         }
-                       
                     }
                     //Do wifi operation
                     //if Disconnected switch to DEVICE_IDLE

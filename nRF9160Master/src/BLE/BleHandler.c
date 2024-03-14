@@ -213,7 +213,7 @@ bool SendLocationToBle()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
-    char cPayload[50];
+    char cPayload[75];
     _sPacket sPacket = {0};
 
     psLocationData = GetLocationData();

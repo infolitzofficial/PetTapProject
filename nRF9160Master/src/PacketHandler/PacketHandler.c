@@ -129,8 +129,8 @@ bool ProcessCmd(char *pcCmd)
             {
                 SendLocationToBle();
             }
-            else{
-
+            else
+            {
                 printk("Didnt get location fix\n\r");
             }
         }

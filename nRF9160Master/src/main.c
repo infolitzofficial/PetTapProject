@@ -30,7 +30,7 @@
 #include <cJSON_os.h>
 #include <zephyr/logging/log.h>
 
-#define STACKSIZE 1024
+#define STACKSIZE 2048
 #define THREAD0_PRIORITY 7
 #define THREAD1_PRIORITY 7
 //aws connect work function
@@ -1145,8 +1145,8 @@ static void GpsTask()
 				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_SLEEP_BETWEEN_PVT) {
 					printf("Sleep period(s) between PVT notifications\n");
 				}
-			//	printf("-----------------------------------\n");
-			//	printk("satelite flag %d\n",last_pvt.flags);
+				// printf("-----------------------------------\n");
+				// printk("satelite flag %d\n",last_pvt.flags);
 				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) {
 					gnss_connected = true;
 					
@@ -1171,7 +1171,7 @@ static void GpsTask()
 					}
 					print_distance_from_reference(&last_pvt);
 				} else {
-					//printk("satelite flag %d\n",last_pvt.flags);
+					// printk("satelite flag %d\n",last_pvt.flags);
 					gnss_connected = false;
 					SetLocationDataStatus(false);
 					//printf("Seconds since last fix: %d\n",
@@ -1192,7 +1192,7 @@ static void GpsTask()
 					//printf("Searching [%c]\n", update_indicator[cnt%4]);
 				}
 
-			//	printf("\nNMEA strings:\n\n");
+				printf("\nNMEA strings:\n\n");
 			}
 		}
 
@@ -1204,14 +1204,14 @@ handle_nmea:
 			/* New NMEA data available */
 
 			if (!output_paused()) {
-			//	printf("%s", nmea_data->nmea_str);
+				printf("%s", nmea_data->nmea_str);
 			}
 			k_free(nmea_data);
 		}
 
 		events[0].state = K_POLL_STATE_NOT_READY;
 		events[1].state = K_POLL_STATE_NOT_READY;
-		k_msleep(100);
+		k_msleep(10);
 	}
 } 
 
