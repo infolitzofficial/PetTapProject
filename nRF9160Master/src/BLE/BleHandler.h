@@ -38,6 +38,7 @@ bool InitBleUart(void);
 void SendBleMsg(uint8_t *pucBuff, uint16_t usLen);
 bool ReadPacket(uint8_t *pucBuffer);
 bool ReadBuffer(void);
+bool SendLocationToBle();
 #endif
 
 //EOF

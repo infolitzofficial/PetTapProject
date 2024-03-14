@@ -85,14 +85,14 @@ void ProcessDeviceState()
                     //Perform Connection
                     printk("INFO: IDLE STATE\n\r");
 
-                    // if (ConfigureAndConnectWiFi())
-                    // {
-                    //     DevState = WAIT_CONNECTION;
-                    // }
-                    // else
-                    // {
-                    //     printk("ERR: WiFi Conn failed\n\r");
-                    // }
+                    if (ConfigureAndConnectWiFi())
+                    {
+                        DevState = WAIT_CONNECTION;
+                    }
+                    else
+                    {
+                        printk("ERR: WiFi Conn failed\n\r");
+                    }
 
                     printk("Info: befor ble connect\n\r");
                     if (ConnectToBLE())
@@ -123,6 +123,7 @@ void ProcessDeviceState()
         case WIFI_DEVICE:
                     if (TimerExpired)
                     {
+
                         if (IsLocationDataOK())
                         {
                             if (SendLocation())
@@ -131,6 +132,7 @@ void ProcessDeviceState()
                                 TimerExpired=false;
                             }
                         }
+                       
                     }
                     //Do wifi operation
                     //if Disconnected switch to DEVICE_IDLE
@@ -141,6 +143,7 @@ void ProcessDeviceState()
                     break;
 
         case BLE_DEVICE:
+                   // printk("INFO: BLE CONNECTED\n\r");
                     //Do BLE operation
                     //if Disconnected switch to DEVICE_IDLE
                     break;

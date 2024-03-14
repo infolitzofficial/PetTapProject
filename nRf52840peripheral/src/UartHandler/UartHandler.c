@@ -167,7 +167,6 @@ void SendData(const uint8_t *pcData, uint16_t usLength)
 
         for (index = 0; index <= usLength; index++)
         {
-            //printf("%c", (char)pcData[index]);
             uart_poll_out(psUartDev, (char)pcData[index]);
             k_msleep(5);
         }

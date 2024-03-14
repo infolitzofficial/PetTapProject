@@ -56,10 +56,11 @@ void ProcessDeviceState()
                     break;
 
         case BLE_CONN_REQ:
-                    printk("In device connected\n\r");
+                   // printk("Ble Connection Request\n\r");
                     if (IsConnected())
                     {
                         strcpy((char *)ucPayload, "ACK");
+                        SetDeviceState(BLE_CONNECTED);
                         BuildPacket(&sPacket, RESP, ucPayload, strlen((char *)ucPayload));
                     }
                     else
@@ -73,12 +74,17 @@ void ProcessDeviceState()
         case BLE_CONNECTED:
                     if (IsNotificationenabled())
                     {
-                        //Do update location data received
+                        strcpy((char *)ucPayload, "LOCATION");
+                        BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
+                        SendData((uint8_t *)&sPacket, sizeof(sPacket));
                     }
                     break;
 
         case BLE_DISCONNECTED:
-
+                    strcpy((char *)ucPayload, "DISCONNECT");
+                    SetDeviceState(BLE_IDLE);
+                    BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
+                    SendData((uint8_t *)&sPacket, sizeof(sPacket));
                     break;
 
         default        :

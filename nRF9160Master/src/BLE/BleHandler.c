@@ -8,6 +8,7 @@
 
 /*******************************************INCLUDES********************************************************/
 #include "../System/SystemHandler.h"
+#include "../PacketHandler/PacketHandler.h"
 #include "BleHandler.h"
 
 /*******************************************MACROS**********************************************************/
@@ -66,10 +67,9 @@ bool ReadBuffer(void)
     uint8_t ucByte = 0;
     bool bRetval = false;
 
-printk("In uart callback \n\r");
     if (uart_fifo_read(BleUart, &ucByte, 1) == 1)
     {
-        printk("%02x \n\r", ucByte);
+
         switch(eUartRxState)
         {
             case START: if (ucByte == '*')
@@ -200,6 +200,30 @@ bool ReadPacket(uint8_t *pucBuffer)
     {
         memcpy(pucBuffer, cRxBuffer, usRxBufferIdx);
         bRxCmplt = false;
+        bRetVal = true;
+    }
+
+    return bRetVal;
+}
+
+/**
+ * 
+*/
+bool SendLocationToBle()
+{
+    _sGnssConfig *psLocationData = NULL;
+    bool bRetVal = false;
+    char cPayload[50];
+    _sPacket sPacket = {0};
+
+    psLocationData = GetLocationData();
+
+    if (psLocationData)
+    {
+        sprintf(cPayload,"%.6f,%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+        printk("sending data: %s\n\r", cPayload);
+        BuildPacket(&sPacket, RESP, (uint8_t *)cPayload, strlen(cPayload));
+        SendBleMsg(&sPacket, sizeof(_sPacket));
         bRetVal = true;
     }
 

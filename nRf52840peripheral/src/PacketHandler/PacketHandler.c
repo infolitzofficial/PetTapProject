@@ -6,6 +6,7 @@
 */
 /*******************************************************INCLUDES***************************************************/
 #include "PacketHandler.h"
+#include <ctype.h>
 #include "../System/SystemHandler.h"
 
 /*******************************************************MACROS*****************************************************/
@@ -32,7 +33,7 @@ bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType,
 {
     bool bRetVal = false;
     
-    printk("Length of payload: %d\n\r", usPayloadLen);
+    //printk("Length of payload: %d\n\r", usPayloadLen);
     if (psPacket && pucPayload)
     {
         psPacket->ucStartByte = START_BYTE;
@@ -140,6 +141,10 @@ bool ProcessResponse(char *pcResp)
         if (strcmp(pcResp, "ACK") == 0)
         {
             bRetVal = true;
+        }
+        else
+        {
+            LocationdataNotify(pcResp, strlen(pcResp));
         }
     }
 

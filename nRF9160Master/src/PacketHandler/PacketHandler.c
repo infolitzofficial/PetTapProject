@@ -6,6 +6,7 @@
 */
 /*******************************************************INCLUDES***************************************************/
 #include "PacketHandler.h"
+#include "../BLE/BleHandler.h"
 #include "../System/SystemHandler.h"
 
 /*******************************************************MACROS*****************************************************/
@@ -81,7 +82,7 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
     {
         switch (psPacket->PacketType)
         {
-            case CMD : //ProcessCmd
+            case CMD : ProcessCmd(psPacket->pucPayload);
                     break;
             case RESP: ProcessResp(psPacket->pucPayload);
                     break;
@@ -111,12 +112,52 @@ bool ProcessCmd(char *pcCmd)
 
     if (pcCmd)
     {
+#ifdef nRF52840    
         if (strcmp(pcCmd, "CONNECT") == 0)
-        {
-#ifdef nRF52840            
+        {        
             SetDeviceState(DEVICE_CONNECTED);
-#endif
+
         }
+#endif
+        if (strcmp(pcCmd, "DISCONNECT") == 0)
+        {
+            SetDeviceState(DEVICE_IDLE);
+        }
+        else if(strcmp(pcCmd, "LOCATION") == 0)
+        {
+            if (IsLocationDataOK())
+            {
+                SendLocationToBle();
+            }
+            else{
+
+                printk("Didnt get location fix\n\r");
+            }
+        }
+    }
+}
+
+static void UpdateStateAfterResponse(bool bStatus)
+{
+    _eDevState *pDevState = 0;
+
+    pDevState = GetDeviceState();
+
+    switch(*pDevState)
+    {
+        case WAIT_CONNECTION:
+                            if (bStatus)
+                            {
+                                SetDeviceState(BLE_CONNECTED);
+                            }
+                            else
+                            {
+                                SetDeviceState(DEVICE_IDLE);
+                            }
+                            break;
+
+        default             :
+                            break;
     }
 }
 
@@ -129,22 +170,19 @@ bool ProcessCmd(char *pcCmd)
 bool ProcessResp(char *pcResp)
 {
     bool bRetVal = false;
-    _eDevState *pDevState = 0;
 
     if (pcResp)
     {
         if (strcmp(pcResp, "ACK") == 0)
         {
-            pDevState = GetDeviceState();
-
-            switch(*pDevState)
-            {
-                case WAIT_CONNECTION:
-                                    SetDeviceState(BLE_CONNECTED);
-                                    break;
-            }
-            bRetVal = true;
+            UpdateStateAfterResponse(true);
         }
+        else if (strcmp(pcResp, "NACK") == 0)
+        {
+            UpdateStateAfterResponse(false);
+        }
+
+        bRetVal = true;
     }
 
     return bRetVal;

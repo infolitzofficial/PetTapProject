@@ -9,6 +9,7 @@
 /**************************** INCLUDES******************************************/
 #include "BleService.h"
 #include "UartHandler.h"
+#include "../System/SystemHandler.h"
 
 /**************************** MACROS********************************************/
 #define VND_MAX_LEN 12
@@ -119,12 +120,14 @@ BT_GATT_SERVICE_DEFINE(VisenseService,
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
+	bConnected = true;
 	printk("Connected\n");
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	bConnected = false;
+	SetDeviceState(BLE_DISCONNECTED);
 	printk("Disconnected (reason 0x%02x)\n", reason);
 }
 
@@ -139,7 +142,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
  * @param unLen - length of data to notify
  * @return 0 in case of success or negative value in case of error
 */
-int VisenseSensordataNotify(uint8_t *pucSensorData, uint16_t unLen)
+int LocationdataNotify(uint8_t *pucSensorData, uint16_t unLen)
 {
 	int nRetVal = 0;
 

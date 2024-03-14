@@ -26,6 +26,12 @@
 typedef void (*cmdHandler)(const char *pcCmd, char *pcArgs[], int nArgc);
 typedef void (*respHandler)(const char *pcResp, bool *pbStatus);
 
+typedef enum __eUartRxState
+{
+    START,
+    RCV,
+    END
+}_eUartRxState;
 typedef struct __sAtCmdHandle
 {
     const char *pcCmd;
@@ -41,7 +47,7 @@ void ProcessResponse(const char *pcResp, bool *pbStatus);
 bool ConfigureAndConnectWiFi();
 bool IsWiFiConnected();
 bool SendLocation();
-
+bool ReadBuff(void);
 #endif
 
 //EOF

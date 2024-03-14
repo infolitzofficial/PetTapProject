@@ -23,11 +23,20 @@
 
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
-static char rx_buf[MSG_SIZE];
-static int rx_buf_pos;
-static bool bRcvdData = false;  //For check received data
+// static char rx_buf[MSG_SIZE];
+// static int rx_buf_pos;
+// static bool bRcvdData = false;  //For check received data
 bool bResponse = false;         //For check response received
-
+// bool bWifiConn = false;
+/*Buffer for UART receive data*/
+static uint8_t cRxBuffer[MSG_SIZE] = {0};
+/*State of UART receive*/
+static _eUartRxState eUartRxState = START;
+/*Index of LoRa packet receive*/
+static uint16_t usRxBufferIdx = 0;
+/*Flag for LORA packet receive completion*/
+static bool bRxCmplt = false;
+K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
 static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc);
@@ -46,7 +55,56 @@ _sAtCmdHandle sAtCmdHandle[] = {
 };  
 
 
-/******************************************FUNCTION DEFINITIONS******************************************/
+/******************************************FUNCTION DEFINITIONS******************************************/  
+/**
+ * @brief Read data from Rx buffer
+ * @param None
+ * @return true for success
+*/
+bool ReadBuff(void)
+{
+    uint8_t ucByte = 0;
+    bool bRetval = false;
+ 
+    if (uart_fifo_read(uart_dev, &ucByte, 1) == 1)
+    {
+       //printk("byte: %02x\n\r", ucByte);
+        switch(eUartRxState)
+        {
+            case START: if (ucByte != '\n' && ucByte != '\r')
+                        {
+                            usRxBufferIdx = 0;
+                            memset(cRxBuffer, 0, sizeof(cRxBuffer));
+                            cRxBuffer[usRxBufferIdx++] = ucByte;
+                            eUartRxState = RCV;
+                        }
+                        break;
+ 
+            case RCV:   if (ucByte == '\n')
+                        {
+                           
+                            cRxBuffer[usRxBufferIdx++] = '\0';
+                            bRxCmplt = true;
+                            eUartRxState = START;
+                            //printk(".\n\r");
+                            k_msgq_put(&UartMsgQueue, &cRxBuffer, K_NO_WAIT);
+                            // k_work_submit(&LoRaE32RXWork);
+                            // k_work_submit_to_queue(&UartWorkQueue, &LoRaE32RXWork);
+                        }
+                        cRxBuffer[usRxBufferIdx++] = ucByte;
+                        break;
+ 
+            case END:   eUartRxState = START;
+                        usRxBufferIdx = 0;
+                        break;
+ 
+            default:    break;            
+        }
+        bRetval = true;
+    }
+ 
+    return bRetval;
+}
 /**
  * @brief       : Callback function for UART reception
  * @param [in]  : dev - UART handle 
@@ -69,19 +127,37 @@ void serial_cb(const struct device *dev, void *user_data)
         return;
     }
 
-    while (uart_fifo_read(uart_dev, &c, 1) == 1)
+    if (!ReadBuff())
     {
-        if ((c == '\r') && rx_buf_pos > 0)
-        {
-            rx_buf[rx_buf_pos] = '\0';
-            bRcvdData = true;
-            rx_buf_pos = 0;
-        }
-        else if (rx_buf_pos < (sizeof(rx_buf) - 1))
-        {
-            rx_buf[rx_buf_pos++] = c;
-        }
+        printk("UART reception failed\n\r");
+        return;
     }
+
+    // while (uart_fifo_read(uart_dev, &c, 1) == 1)
+    // {
+    //     if ((c == '\n') && rx_buf_pos > 0)
+    //     {
+    //         if ((strstr(rx_buf, "OK") != NULL))
+    //         {
+    //             rx_buf[rx_buf_pos] = '\0';
+    //             bRcvdData = true;
+    //             rx_buf_pos = 0;
+    //         }
+    //         if ((strstr(rx_buf, "WFSTA:1") != NULL))
+    //         {
+    //             bWifiConn = true;
+    //         }
+
+    //     }
+    //     else if (rx_buf_pos < (sizeof(rx_buf) - 1))
+    //     {
+    //         if (rx_buf_pos == MSG_SIZE-1)
+    //         {
+    //             rx_buf_pos = 0;
+    //         }
+    //         rx_buf[rx_buf_pos++] = c;
+    //     }
+    //}
     
 
 }
@@ -144,22 +220,22 @@ bool ConfigureAndConnectWiFi()
         
         nRetry = 2;
 
-      //  do
-      //  {
+    //    do
+    //    {
             do
             {
-                bRcvdData = false;
+                bRxCmplt = false;
                 bResponse = false;
                 sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
                 printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
                 TimeNow = sys_clock_tick_get();
 
-                while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 15))
+                while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 5))
                 {
-                    if (bRcvdData)
+                    if (bRxCmplt)
                     {
-                        printk("Response: %s\n\r", rx_buf);
-                        sAtCmdHandle[ucIdx].RespHdlr(rx_buf, &bResponse);
+                        printk("Response: %s\n\r", cRxBuffer);
+                        sAtCmdHandle[ucIdx].RespHdlr(cRxBuffer, &bResponse);
                         if (bResponse)
                         {
                             printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
@@ -176,8 +252,7 @@ bool ConfigureAndConnectWiFi()
                 break;
             }
         Cmplt://NoP
-       // }
-        //} while(bRcvdData == false);
+        // } while(bRcvdData == false);
 
     }
 
@@ -212,7 +287,7 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus)
 {
 
-    if (strstr(pcResp, "WFSTA:1") != NULL)
+    if (strstr(pcResp, "+WFSTA:1") != NULL)
     {
         *pbStatus = true;
     }
@@ -281,20 +356,18 @@ bool IsWiFiConnected()
 {
     bool bRetVal = false;
     bool bResponse = false;
-    char cCmdBuff[50];
+    char cCmdBuff[255];
 
-    bRcvdData = false;
+    bRxCmplt = false;
     strcpy(cCmdBuff, "AT+WFSTA\n\r");
     print_uart(cCmdBuff);
 
-    if (bRcvdData)
+    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(500));
+    printk("ConnResponse: %s\n\r", cCmdBuff);
+    ProcessConnectionStataus(cCmdBuff, &bResponse);
+    if (bResponse)
     {
-        printk("Response: %s\n\r", rx_buf);
-        ProcessConnectionStataus(rx_buf, &bResponse);
-        if (bResponse)
-        {
-            bRetVal = true;
-        }
+        bRetVal = true;
     }
 
     return bRetVal;
