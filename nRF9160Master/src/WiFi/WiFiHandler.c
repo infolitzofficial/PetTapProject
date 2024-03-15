@@ -13,29 +13,25 @@
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
-#define BUF_SIZE 255
 #define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp" //Change this line with SSID and password of choice
 #define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
 #define AWS_THING 		    "test_aws_iot"
 #define AWS_TOPIC 		    "test_aws_iot/testtopic"
 #define CFG_NUM 	        1
 #define CFG_NAME 	        "latlong"
-
+#define RETRY_COUNT         2
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
-// static char rx_buf[MSG_SIZE];
-// static int rx_buf_pos;
-// static bool bRcvdData = false;  //For check received data
-bool bResponse = false;         //For check response received
-// bool bWifiConn = false;
+bool bResponse = false;         //For check response received for AT command
 /*Buffer for UART receive data*/
 static uint8_t cRxBuffer[MSG_SIZE] = {0};
 /*State of UART receive*/
 static _eUartRxState eUartRxState = START;
-/*Index of LoRa packet receive*/
+/*Index of Receiving buffer*/
 static uint16_t usRxBufferIdx = 0;
-/*Flag for LORA packet receive completion*/
+/*Flag for packet receive completion*/
 static bool bRxCmplt = false;
+
 K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
@@ -68,7 +64,6 @@ bool ReadBuff(void)
  
     if (uart_fifo_read(uart_dev, &ucByte, 1) == 1)
     {
-       //printk("byte: %02x\n\r", ucByte);
         switch(eUartRxState)
         {
             case START: if (ucByte != '\n' && ucByte != '\r')
@@ -86,10 +81,7 @@ bool ReadBuff(void)
                             cRxBuffer[usRxBufferIdx++] = '\0';
                             bRxCmplt = true;
                             eUartRxState = START;
-                            //printk(".\n\r");
                             k_msgq_put(&UartMsgQueue, &cRxBuffer, K_NO_WAIT);
-                            // k_work_submit(&LoRaE32RXWork);
-                            // k_work_submit_to_queue(&UartWorkQueue, &LoRaE32RXWork);
                         }
                         cRxBuffer[usRxBufferIdx++] = ucByte;
                         break;
@@ -132,34 +124,6 @@ void serial_cb(const struct device *dev, void *user_data)
         printk("UART reception failed\n\r");
         return;
     }
-
-    // while (uart_fifo_read(uart_dev, &c, 1) == 1)
-    // {
-    //     if ((c == '\n') && rx_buf_pos > 0)
-    //     {
-    //         if ((strstr(rx_buf, "OK") != NULL))
-    //         {
-    //             rx_buf[rx_buf_pos] = '\0';
-    //             bRcvdData = true;
-    //             rx_buf_pos = 0;
-    //         }
-    //         if ((strstr(rx_buf, "WFSTA:1") != NULL))
-    //         {
-    //             bWifiConn = true;
-    //         }
-
-    //     }
-    //     else if (rx_buf_pos < (sizeof(rx_buf) - 1))
-    //     {
-    //         if (rx_buf_pos == MSG_SIZE-1)
-    //         {
-    //             rx_buf_pos = 0;
-    //         }
-    //         rx_buf[rx_buf_pos++] = c;
-    //     }
-    //}
-    
-
 }
 
 /**
@@ -204,7 +168,7 @@ bool ConfigureAndConnectWiFi()
     bool bRetVal = false;
     uint8_t ucIdx = 0;
     uint32_t TimeNow=0;
-    int8_t nRetry =3;
+    int8_t nRetry = 0;
 
     for (ucIdx = 0; ucIdx < sizeof(sAtCmdHandle)/sizeof(sAtCmdHandle[0]); ucIdx++)
     {
@@ -218,41 +182,39 @@ bool ConfigureAndConnectWiFi()
             break;
         }
         
-        nRetry = 2;
+        nRetry = RETRY_COUNT;
 
-    //    do
-    //    {
-            do
+        do
+        {
+            bRxCmplt = false;
+            bResponse = false;
+            sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
+            printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
+            TimeNow = sys_clock_tick_get();
+
+            while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 5))
             {
-                bRxCmplt = false;
-                bResponse = false;
-                sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
-                printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
-                TimeNow = sys_clock_tick_get();
-
-                while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 5))
+                if (bRxCmplt)
                 {
-                    if (bRxCmplt)
+                    printk("Response: %s\n\r", cRxBuffer);
+                    sAtCmdHandle[ucIdx].RespHdlr(cRxBuffer, &bResponse);
+                    if (bResponse)
                     {
-                        printk("Response: %s\n\r", cRxBuffer);
-                        sAtCmdHandle[ucIdx].RespHdlr(cRxBuffer, &bResponse);
-                        if (bResponse)
-                        {
-                            printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
-                            bRetVal = true;
-                            goto Cmplt;
-                        }
+                        printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
+                        bRetVal = true;
+                        goto Cmplt;
                     }
                 }
-
-            }while((nRetry--) > 0);
-
-            if (!bRetVal)
-            {
-                break;
             }
-        Cmplt://NoP
-        // } while(bRcvdData == false);
+
+        }while((nRetry--) > 0);
+
+        if (!bRetVal)
+        {
+            break;
+        }
+
+        Cmplt: //No Operation
 
     }
 
@@ -422,8 +384,8 @@ bool SendLocation()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
-    char cPayload[50];
-    char cATcmd[100];
+    char cPayload[50]; //Location data buffer
+    char cATcmd[100]; //AT command buffer 
 
     psLocationData = GetLocationData();
 
@@ -439,3 +401,5 @@ bool SendLocation()
 
     return bRetVal;
 }
+
+//EOF

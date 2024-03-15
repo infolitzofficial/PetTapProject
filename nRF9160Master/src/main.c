@@ -30,9 +30,9 @@
 #include <cJSON_os.h>
 #include <zephyr/logging/log.h>
 
-#define STACKSIZE 2048
-#define THREAD0_PRIORITY 7
-#define THREAD1_PRIORITY 7
+#define STACKSIZE 			2048
+#define THREAD0_PRIORITY 	7
+#define THREAD1_PRIORITY 	7
 //aws connect work function
 static struct k_work_delayable connect_work;
 
@@ -1092,6 +1092,12 @@ int main(void)
 	return 0;
 }
 
+/**
+ * @brief 	   : GNSS and LTE Handler Task
+ * @param [in] : None
+ * @param [out]: None
+ * @return	   : None
+*/
 static void GpsTask()
 {
 	uint8_t cnt = 0;
@@ -1215,6 +1221,12 @@ handle_nmea:
 	}
 } 
 
+/**
+ * @brief 	   : System Handler Task
+ * @param [in] : None
+ * @param [out]: None
+ * @return	   : None
+*/
 static void SystemTask()
 {
 	while (1)

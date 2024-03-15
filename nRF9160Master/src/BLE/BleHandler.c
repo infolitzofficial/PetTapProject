@@ -1,9 +1,9 @@
 /**
- * @file   : SystemHandler.c
+ * @file   : BleHandler.c
  * @brief  : Files handling 52840 related functions
  * @author : Adhil
  * @date   : 05-03-2024
- * @ref    : SystemHandler.h
+ * @ref    : BleHandler.h
 */
 
 /*******************************************INCLUDES********************************************************/
@@ -12,7 +12,8 @@
 #include "BleHandler.h"
 
 /*******************************************MACROS**********************************************************/
-#define MSG_SIZE 1024
+#define MSG_SIZE        1024
+#define PAYLOAD_SIZE    75
 
 /******************************************TYPEDEFS*********************************************************/
 
@@ -160,12 +161,12 @@ bool InitBleUart(void)
 */
 void SendBleMsg(uint8_t *pucBuff, uint16_t usLen)
 {
-    //int msg_len = strlen(buf);
     printk("MsgLen: %d\n\r", usLen);
+
     for (int i = 0; i <= usLen; i++)
     {
         uart_poll_out(BleUart, pucBuff[i]);
-        k_msleep(5);
+        k_msleep(5); //delay 5ms
     }
 }
 
@@ -213,7 +214,7 @@ bool SendLocationToBle()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
-    char cPayload[75];
+    char cPayload[PAYLOAD_SIZE];
     _sPacket sPacket = {0};
 
     psLocationData = GetLocationData();
@@ -229,3 +230,5 @@ bool SendLocationToBle()
 
     return bRetVal;
 }
+
+//EOF

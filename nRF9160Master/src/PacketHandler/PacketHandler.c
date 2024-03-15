@@ -1,6 +1,6 @@
 /**
  * @file    : PacketHandler.c
- * @brief   : Functions for handling uart peripheral
+ * @brief   : Functions for handling Packet mechanism
  * @author  : Adhil
  * @date    : 13-03-2024
 */
@@ -206,24 +206,4 @@ bool ProcessPayload(char *pcPayload)
     return bRetVal;
 }
 
-// /**
-//  * @brief      : Process acknowledge
-//  * @param [in] : pcMsg - acknowledgement message
-//  * @param [out]: None
-//  * @return     : true for success
-// */
-// bool ProcessAcknowledge(char *pcMsg)
-// {
-//     bool bRetVal = false;
-//     _eDevState *pDevState = NULL;
-
-//     if (pcMsg)
-//     {
-//         if (strcmp(pcMsg, "OK") == 0)
-//         {
-//             bRetVal = true;
-//         }
-//     }
-
-//     return bRetVal;
-// }
+//EOF

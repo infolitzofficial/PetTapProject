@@ -45,3 +45,5 @@ void InitTimerTask(int nPeriod);
 _sGnssConfig * GetLocationData();
 
 #endif
+
+//EOF

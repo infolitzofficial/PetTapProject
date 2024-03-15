@@ -1,8 +1,8 @@
 /**
- * @file    : LoRaE32Handler.h
- * @brief   : Functions for handling LoRa E32
- * @author  : Jeslin James
- * @date    : 02-03-2024
+ * @file    : PacketHandler.h
+ * @brief   : Functions for handling Packet mechanism
+ * @author  : Adhil
+ * @date    : 13-03-2024
 */
 
 #ifndef _PACKET_HANDLER_H
@@ -18,6 +18,7 @@
 /*********************************************************MACROS**************************************************/
 #define START_BYTE      0x2A
 #define END_BYTE        0x23
+#define DATA_SIZE       100
 
 /*********************************************************TYPEDEFS************************************************/
 
@@ -33,7 +34,7 @@ typedef struct __attribute__((__packed__)) __sPacket
 {
     uint8_t ucStartByte;
     _ePacketType PacketType;
-    uint8_t pucPayload[100];
+    uint8_t pucPayload[DATA_SIZE];
     uint16_t usLen;
     uint8_t ucEndByte;
 }_sPacket;
@@ -46,7 +47,6 @@ bool ProcessRcvdPacket(_sPacket *psPacket);
 bool ProcessCmd(char *pcCmd);
 bool ProcessResp(char *pcResp);
 bool ProcessPayload(char *pcPayload);
-//bool ProcessAcknowledge(char *pcMsg);
 
 #endif
 

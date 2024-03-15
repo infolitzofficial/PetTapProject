@@ -12,7 +12,7 @@
 #include "../PacketHandler/PacketHandler.h"
 
 /*******************************************MACROS**********************************************************/
-
+#define BUFFER_SIZE     255
 
 /******************************************TYPEDEFS*********************************************************/
 static _eDevState DevState = DEVICE_IDLE;
@@ -29,7 +29,7 @@ static bool TimerExpired = false;
 */
 static bool ConnectToBLE()
 {
-    uint8_t ucPayload[255] = {0};
+    uint8_t ucPayload[BUFFER_SIZE] = {0};
     _sPacket sPacket = {0};
     bool bRetVal = false;
 
@@ -53,7 +53,7 @@ static bool ConnectToBLE()
 void PollMsgs()
 {
     uint32_t TimeNow = 0;
-    uint8_t ucBuff[255];
+    uint8_t ucBuff[BUFFER_SIZE];
     _sPacket sPacket = {0};
 
     if (ReadPacket(ucBuff))
@@ -94,7 +94,7 @@ void ProcessDeviceState()
                         printk("ERR: WiFi Conn failed\n\r");
                     }
 
-                    printk("Info: befor ble connect\n\r");
+                    printk("Info: Before ble connect\n\r");
                     if (ConnectToBLE())
                     {
                         DevState = WAIT_CONNECTION;
@@ -107,7 +107,7 @@ void ProcessDeviceState()
                     break;
 
         case WAIT_CONNECTION:
-                    //printk("INFO: CONN WAIT\n\r");
+                    printk("INFO: Waiting connection\n\r");
                     if(IsWiFiConnected())
                     {
                         DevState = WIFI_CONNECTED;
@@ -115,7 +115,7 @@ void ProcessDeviceState()
                     break;
 
         case WIFI_CONNECTED:
-                    printk("INFO: WIFI CONNECTED\n\r");
+                    printk("INFO: Connected to WiFi\n\r");
                     InitTimerTask(30);
                     DevState = WIFI_DEVICE;
                     break;
@@ -132,18 +132,17 @@ void ProcessDeviceState()
                             }
                         }
                     }
-                    //Do wifi operation
-                    //if Disconnected switch to DEVICE_IDLE
+                    /* Note: Need to handle the disconnection scenarion from wifi module
+                    */
                     break;
 
         case BLE_CONNECTED:
+                    printk("INFO: Connected to BLE\n\r");
                     DevState = BLE_DEVICE;
                     break;
 
         case BLE_DEVICE:
-                   // printk("INFO: BLE CONNECTED\n\r");
-                    //Do BLE operation
-                    //if Disconnected switch to DEVICE_IDLE
+                    //No Op
                     break;
 
         default        :
@@ -239,15 +238,10 @@ static void TimerExpiredCb(struct k_timer *timer)
     switch(DevState)
     {
         case WIFI_DEVICE :  printk("INFO: TimerExpired Callback\n\r");
-                            //k_msleep(50);
                             TimerExpired = true;
                             break;
 
         case BLE_DEVICE  :  
-                            // if (IsLocationDataOK())
-                            // {
-                            //     //Send Data to nRf52840                               
-                            // }
                             break;
 
         default          :
@@ -288,3 +282,5 @@ void StopTimer()
 {
     k_timer_stop(&Timer);
 }
+
+//EOF

@@ -19,8 +19,9 @@
 #include <stdlib.h>
 
 /*********************************************MACROS******************************************************/
-#define TICK_RATE               32768
+#define TICK_RATE      32768
 #define TIMESLOT       TICK_RATE * 15
+#define ARGS_CNT       5
 
 /**********************************************TYPEDEFS***************************************************/
 typedef void (*cmdHandler)(const char *pcCmd, char *pcArgs[], int nArgc);
@@ -38,7 +39,7 @@ typedef struct __sAtCmdHandle
     cmdHandler CmdHdlr;
     respHandler RespHdlr;
     int  nArgsCount;
-    char *pcArgs[5];
+    char *pcArgs[ARGS_CNT];
 }_sAtCmdHandle;
 
 /***********************************************FUNCTION DECLARATIONS**************************************/

@@ -1,9 +1,9 @@
 /**
- * @file    : WiFiHandler.h
+ * @file    : BleHandler.h
  * @brief   : File contains WiFi related functions
  * @author  : Adhil
  * @date    : 06-03-2024
- * @see     : WiFiHandler.c
+ * @see     : BleHandler.c
  * @note
 */
 
