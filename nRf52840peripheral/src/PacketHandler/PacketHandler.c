@@ -33,7 +33,6 @@ bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType,
 {
     bool bRetVal = false;
     
-    //printk("Length of payload: %d\n\r", usPayloadLen);
     if (psPacket && pucPayload)
     {
         psPacket->ucStartByte = START_BYTE;
@@ -169,24 +168,4 @@ bool ProcessPayload(char *pcPayload)
     return bRetVal;
 }
 
-// /**
-//  * @brief      : Process acknowledge
-//  * @param [in] : pcMsg - acknowledgement message
-//  * @param [out]: None
-//  * @return     : true for success
-// */
-// bool ProcessAcknowledge(char *pcMsg)
-// {
-//     bool bRetVal = false;
-//     _eDevState *pDevState = NULL;
-
-//     if (pcMsg)
-//     {
-//         if (strcmp(pcMsg, "OK") == 0)
-//         {
-//             bRetVal = true;
-//         }
-//     }
-
-//     return bRetVal;
-// }
+//EOF

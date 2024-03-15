@@ -31,3 +31,5 @@ _eDevState *GetDeviceState();
 void SetDeviceState(_eDevState DeviceState);
 
 #endif
+
+//EOF

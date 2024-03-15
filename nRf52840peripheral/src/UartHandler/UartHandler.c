@@ -29,14 +29,13 @@ static bool bRxCmplt = false;
 
 /*******************************************************PUBLIC VARIABLES*******************************************/
 
-
-
 /*******************************************************FUNCTION DEFINITION*****************************************/
 
 /**
- * @brief Initialising LoRa
- * @param None
- * @return true for success
+ * @brief      : Initialising Uart for communication between 9160
+ * @param [in] : None
+ * @param [out]: None
+ * @return     : true for success
 */
 bool InitUart(void)
 {
@@ -81,10 +80,10 @@ bool InitUart(void)
     return bRetVal;
 }
 /**
- * @brief Callback for LoRa Receive Interrupt
- * @param dev - UART device
- * @param user_data - User data
- * @return None
+ * @brief      : Callback for uart reception
+ * @param [in] : dev - UART device
+ * @param [in] : user_data - User data
+ * @return     : None
 */
  
 void ReceptionCb(const struct device *dev, void *user_data)
@@ -109,9 +108,10 @@ void ReceptionCb(const struct device *dev, void *user_data)
    
 }
 /**
- * @brief Read data from Rx buffer
- * @param None
- * @return true for success
+ * @brief       : Read data from Rx buffer
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool ReadBuffer(void)
 {
@@ -154,9 +154,10 @@ bool ReadBuffer(void)
     return bRetval;
 }
 /**
- * @brief  Send data via uart
- * @param  pcData : data to send
- * @return None
+ * @brief      : Send data via uart
+ * @param [in] : pcData - data to send
+ * @param [in] : usLength - Length of packet
+ * @return     : None
 */
 void SendData(const uint8_t *pcData, uint16_t usLength)
 {
@@ -175,9 +176,10 @@ void SendData(const uint8_t *pcData, uint16_t usLength)
 }
 
 /**
- * @brief Read LoRa packet
- * @param pucBuffer : LoRa packet buffer
- * @return true for success
+ * @brief       : Read Packet
+ * @param [in]  : None
+ * @param [out] : pucBuffer - Receiving buffer
+ * @return      : true for success
 */
 bool ReadPacket(uint8_t *pucBuffer)
 {
@@ -193,3 +195,4 @@ bool ReadPacket(uint8_t *pucBuffer)
     return bRetVal;
 }
 
+//EOF

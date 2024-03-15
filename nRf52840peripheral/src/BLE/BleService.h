@@ -1,9 +1,9 @@
 /**
- * @file BleService.h
- * @brief File containing Visense service related handling
- * @author
- * @see BleService.c
- * @date 27-09-2023
+ * @file    : BleService.h
+ * @brief   : File containing Visense service related handling
+ * @author  : Adhil
+ * @see     : BleService.c
+ * @date 	: 15-03-2024
 */
 
 /**************************************INCLUDES******************************/
@@ -23,3 +23,5 @@ bool IsConnected();
 void GetRcvdData(uint8_t *pucData);
 bool IsDataRcvd();
 void SetRcvdDataStatus(bool bStatus);
+
+//EOF

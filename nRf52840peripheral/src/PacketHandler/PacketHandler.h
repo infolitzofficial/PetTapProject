@@ -1,7 +1,7 @@
 /**
- * @file    : LoRaE32Handler.h
- * @brief   : Functions for handling LoRa E32
- * @author  : Jeslin James
+ * @file    : PacketHandler.h
+ * @brief   : Functions for handling Packet mechanism
+ * @author  : Adhil
  * @date    : 02-03-2024
 */
 
@@ -29,6 +29,7 @@ typedef enum __ePacketType
     ACK
 }_ePacketType;
 
+//Note: Do not modify below structure it might affect communication between 9160
 typedef struct __attribute__((__packed__)) __sPacket
 {
     uint8_t ucStartByte;
@@ -46,7 +47,6 @@ bool ProcessRcvdPacket(_sPacket *psPacket);
 bool ProcessCmd(char *pcCmd);
 bool ProcessResponse(char *pcResp);
 bool ProcessPayload(char *pcPayload);
-//bool ProcessAcknowledge(char *pcMsg);
 
 #endif
 

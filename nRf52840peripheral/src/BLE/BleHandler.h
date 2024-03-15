@@ -1,8 +1,8 @@
 /**
- * @file BleHandler.h
- * @author 
- * @brief
- * @date 27-09-2023
+ * @file    : BleHandler.h
+ * @author  : Adhil
+ * @brief   : File containing BLE functions
+ * @date    : 15-03-2023
  * @see BleHandler.c
 */
 #ifndef _BLE_HANDLER_H
@@ -18,6 +18,7 @@
 
 /***************************************MACROS*******************************/
 #define ADV_BUFF_SIZE           (100)
+
 /**************************************TYPEDEFS******************************/
 
 /*************************************FUNCTION DECLARATION*******************/
@@ -29,3 +30,5 @@ int UpdateAdvertiseData(void);
 bool BleStopAdvertise();
 
 #endif
+
+//EOF

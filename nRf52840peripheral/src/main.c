@@ -1,11 +1,10 @@
 /**
- * @file main.c
- * @brief Main function
- * @date 2023-21-09
- * @author Jeslin
- * @note  This is a test code for pressure sensor.
+ * @file     : main.c
+ * @brief    : Application for PetTap BLE services
+ * @date     : 15-03-2024
+ * @author   : Adhil
+ * @note     : None 
 */
-
 
 /*******************************INCLUDES****************************************/
 #include <zephyr/device.h>
@@ -31,25 +30,18 @@
 
 /*******************************MACROS****************************************/
 
-
 /*******************************GLOBAL VARIABLES********************************/
-uint8_t ucNotifyBuf[] = {0xdd, 0x03, 0x00, 0x1b, 0x05, 0x34, 0x00, 0x00, 0x19, 0xab, 0x27, 0x10, 0x00, 0x00, 0x2a, 0x75, 0x00};
-
-uint8_t ucNotifyBuf2[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x42, 0x03, 0x04, 0x02, 0x09, 0x7f, 0x0b,0xa3, 0xfc, 0x71, 0x77};
 
 /*******************************FUNCTION DEFINITIONS********************************/
-
-
 /**
- * @brief  Main function
- * @return int
+ * @brief      : Main function
+ * @param [in] : None
+ * @param [out]: None
+ * @return     :
 */
 int main(void)
 {
     int nError;
-    // uint8_t ucRcvdbuf[100] = {0};
-    // uint8_t ucSampleBuf[] = {0xDD,0xA5,0x03,0x00,0xFF,0xFD,0x77};
-
 
     if (!EnableBLE())
     {
@@ -70,7 +62,9 @@ int main(void)
         ProcessDeviceState();
     }
 
-    printk("Program exit");
+    printk("CRITICAL: Program exit");
 
     return;
 }
+
+//EOF

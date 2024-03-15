@@ -52,11 +52,11 @@ void ProcessDeviceState()
     switch(DevState)
     {
         case BLE_IDLE:
-                    //Perform Connection
+                    //No Operation 
                     break;
 
         case BLE_CONN_REQ:
-                   // printk("Ble Connection Request\n\r");
+                   // Ble Connection Request
                     if (IsConnected())
                     {
                         strcpy((char *)ucPayload, "ACK");
@@ -113,3 +113,5 @@ void SetDeviceState(_eDevState DeviceState)
 {
     DevState = DeviceState;
 }
+
+//EOF

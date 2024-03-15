@@ -1,8 +1,8 @@
 /**
- * @file Blehandler.c
- * @author
- * @brief
- * @date
+ * @file   : Blehandler.c
+ * @author : Adhil
+ * @brief  : Files containing Ble functions
+ * @date   : 15-03-2024
  * 
 */
 
@@ -15,9 +15,8 @@
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
 
 /************************************GLOBALS**************************/
-struct bt_le_ext_adv *adv;
-
-uint8_t ucAdVertsingBuffer[ADV_BUFF_SIZE] = {0x00, 0x00, 0x00, 0x00, 0x00};
+struct bt_le_ext_adv *adv; //Advertsisement handle
+uint8_t ucAdVertsingBuffer[ADV_BUFF_SIZE] = {0x00, 0x00, 0x00, 0x00, 0x00}; //Advertsising buffer
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -25,11 +24,11 @@ static const struct bt_data ad[] = {
 };
 
 /**********************************FUNCTION DEFINITION****************/
-
 /**
- * @brief  This function isfor Enabling BLE
- * @param  None 
- * @return True for success
+ * @brief      : This function is for Enabling BLE
+ * @param [in] : None 
+ * @param [out]: None
+ * @return     : True for success
 */
 bool EnableBLE()
 {
@@ -51,8 +50,10 @@ bool EnableBLE()
 }
 
 /**
- * @brief function to initialize extended advertising
- * @return nRetVal - 0 for success
+ * @brief      : function to initialize extended advertising
+ * @param [in] : None 
+ * @param [out]: None
+ * @return     : nRetVal - 0 for success
 */
 int InitExtendedAdv(void)
 {
@@ -89,8 +90,10 @@ int InitExtendedAdv(void)
 
 
 /**
- * @brief function to start advertising
- * @return nError - 0 for success
+ * @brief      : function to start advertising
+ * @param [in] : None 
+ * @param [out]: None
+ * @return     : nError - 0 for success
 */
 int StartAdvertising(void)
 {
@@ -112,15 +115,22 @@ int StartAdvertising(void)
 
 
 /**
- * @brief Getting advertising buffer 
- * @param None
- * @return address of advertising buffer
+ * @brief      : Getting advertising buffer 
+ * @param [in] : None 
+ * @param [out]: None
+ * @return     : address of advertising buffer
 */
 uint8_t *GetAdvertisingBuffer()
 {
     return ucAdVertsingBuffer;
 }
 
+/**
+ * @brief      : Stop advertsisement
+ * @param [in] : None
+ * @param [out]: None
+ * @return     : true for success
+*/
 bool BleStopAdvertise()
 {
     int nError = 0;
@@ -139,3 +149,5 @@ bool BleStopAdvertise()
 
     return bRetVal;
 }
+
+//EOF
