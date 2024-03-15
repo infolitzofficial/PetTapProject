@@ -19,20 +19,27 @@
 #include <stdlib.h>
 
 /*********************************************MACROS******************************************************/
-#define TICK_RATE               32768
+#define TICK_RATE      32768
 #define TIMESLOT       TICK_RATE * 15
+#define ARGS_CNT       5
 
 /**********************************************TYPEDEFS***************************************************/
 typedef void (*cmdHandler)(const char *pcCmd, char *pcArgs[], int nArgc);
 typedef void (*respHandler)(const char *pcResp, bool *pbStatus);
 
+typedef enum __eUartRxState
+{
+    START,
+    RCV,
+    END
+}_eUartRxState;
 typedef struct __sAtCmdHandle
 {
     const char *pcCmd;
     cmdHandler CmdHdlr;
     respHandler RespHdlr;
     int  nArgsCount;
-    char *pcArgs[5];
+    char *pcArgs[ARGS_CNT];
 }_sAtCmdHandle;
 
 /***********************************************FUNCTION DECLARATIONS**************************************/
@@ -41,7 +48,7 @@ void ProcessResponse(const char *pcResp, bool *pbStatus);
 bool ConfigureAndConnectWiFi();
 bool IsWiFiConnected();
 bool SendLocation();
-
+bool ReadBuff(void);
 #endif
 
 //EOF

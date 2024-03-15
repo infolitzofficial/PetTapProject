@@ -18,31 +18,17 @@
 /*********************************************TYPEDEFS***************************************************/
 typedef enum __eDevState
 {
-    WIFI_CONNECTED,
-    WAIT_CONNECTION,
+    BLE_IDLE,
+    BLE_CONN_REQ,
     BLE_CONNECTED,
-    WIFI_DEVICE,
-    BLE_DEVICE,
-    DEVICE_IDLE,
+    BLE_DISCONNECTED,
 }_eDevState;
-
-typedef struct __sGnssConfig
-{
-    double dLatitude;
-    double dLongitude;
-    bool bLocationUpdated;
-}_sGnssConfig;
 
 /**********************************************FUNCTION DECLARATIONS*************************************/
 void ProcessDeviceState();
 void PollMsgs();
 _eDevState *GetDeviceState();
 void SetDeviceState(_eDevState DeviceState);
-bool IsLocationDataOK(void);
-void SetLocationDataStatus(bool bStatus);
-bool UpdateLocation(_sGnssConfig *psLocationData);
-void InitTimerTask(int nPeriod);
-_sGnssConfig * GetLocationData();
 
 #endif
 

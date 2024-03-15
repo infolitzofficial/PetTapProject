@@ -13,21 +13,26 @@
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
-#define BUF_SIZE 255
 #define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp" //Change this line with SSID and password of choice
 #define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
 #define AWS_THING 		    "test_aws_iot"
 #define AWS_TOPIC 		    "test_aws_iot/testtopic"
 #define CFG_NUM 	        1
 #define CFG_NAME 	        "latlong"
-
+#define RETRY_COUNT         2
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
-static char rx_buf[MSG_SIZE];
-static int rx_buf_pos;
-static bool bRcvdData = false;  //For check received data
-bool bResponse = false;         //For check response received
+bool bResponse = false;         //For check response received for AT command
+/*Buffer for UART receive data*/
+static uint8_t cRxBuffer[MSG_SIZE] = {0};
+/*State of UART receive*/
+static _eUartRxState eUartRxState = START;
+/*Index of Receiving buffer*/
+static uint16_t usRxBufferIdx = 0;
+/*Flag for packet receive completion*/
+static bool bRxCmplt = false;
 
+K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
 static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc);
@@ -46,7 +51,52 @@ _sAtCmdHandle sAtCmdHandle[] = {
 };  
 
 
-/******************************************FUNCTION DEFINITIONS******************************************/
+/******************************************FUNCTION DEFINITIONS******************************************/  
+/**
+ * @brief Read data from Rx buffer
+ * @param None
+ * @return true for success
+*/
+bool ReadBuff(void)
+{
+    uint8_t ucByte = 0;
+    bool bRetval = false;
+ 
+    if (uart_fifo_read(uart_dev, &ucByte, 1) == 1)
+    {
+        switch(eUartRxState)
+        {
+            case START: if (ucByte != '\n' && ucByte != '\r')
+                        {
+                            usRxBufferIdx = 0;
+                            memset(cRxBuffer, 0, sizeof(cRxBuffer));
+                            cRxBuffer[usRxBufferIdx++] = ucByte;
+                            eUartRxState = RCV;
+                        }
+                        break;
+ 
+            case RCV:   if (ucByte == '\n')
+                        {
+                           
+                            cRxBuffer[usRxBufferIdx++] = '\0';
+                            bRxCmplt = true;
+                            eUartRxState = START;
+                            k_msgq_put(&UartMsgQueue, &cRxBuffer, K_NO_WAIT);
+                        }
+                        cRxBuffer[usRxBufferIdx++] = ucByte;
+                        break;
+ 
+            case END:   eUartRxState = START;
+                        usRxBufferIdx = 0;
+                        break;
+ 
+            default:    break;            
+        }
+        bRetval = true;
+    }
+ 
+    return bRetval;
+}
 /**
  * @brief       : Callback function for UART reception
  * @param [in]  : dev - UART handle 
@@ -69,21 +119,11 @@ void serial_cb(const struct device *dev, void *user_data)
         return;
     }
 
-    while (uart_fifo_read(uart_dev, &c, 1) == 1)
+    if (!ReadBuff())
     {
-        if ((c == '\r') && rx_buf_pos > 0)
-        {
-            rx_buf[rx_buf_pos] = '\0';
-            bRcvdData = true;
-            rx_buf_pos = 0;
-        }
-        else if (rx_buf_pos < (sizeof(rx_buf) - 1))
-        {
-            rx_buf[rx_buf_pos++] = c;
-        }
+        printk("UART reception failed\n\r");
+        return;
     }
-    
-
 }
 
 /**
@@ -128,7 +168,7 @@ bool ConfigureAndConnectWiFi()
     bool bRetVal = false;
     uint8_t ucIdx = 0;
     uint32_t TimeNow=0;
-    int8_t nRetry =3;
+    int8_t nRetry = 0;
 
     for (ucIdx = 0; ucIdx < sizeof(sAtCmdHandle)/sizeof(sAtCmdHandle[0]); ucIdx++)
     {
@@ -142,36 +182,39 @@ bool ConfigureAndConnectWiFi()
             break;
         }
         
-        nRetry = 3;
+        nRetry = RETRY_COUNT;
 
         do
         {
-            do
-            {
-                bRcvdData = false;
-                bResponse = false;
-                sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
-                printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
-                TimeNow = sys_clock_tick_get();
+            bRxCmplt = false;
+            bResponse = false;
+            sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
+            printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
+            TimeNow = sys_clock_tick_get();
 
-                while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 15))
+            while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 5))
+            {
+                if (bRxCmplt)
                 {
-                    if (bRcvdData)
+                    printk("Response: %s\n\r", cRxBuffer);
+                    sAtCmdHandle[ucIdx].RespHdlr(cRxBuffer, &bResponse);
+                    if (bResponse)
                     {
-                        printk("Response: %s\n\r", rx_buf);
-                        sAtCmdHandle[ucIdx].RespHdlr(rx_buf, &bResponse);
-                        if (bResponse)
-                        {
-                            printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
-                            bRetVal = true;
-                            goto Cmplt;
-                        }
+                        printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
+                        bRetVal = true;
+                        goto Cmplt;
                     }
                 }
+            }
 
-            }while((nRetry--) > 0);
-        Cmplt://NoP
-        } while(bRcvdData == false);
+        }while((nRetry--) > 0);
+
+        if (!bRetVal)
+        {
+            break;
+        }
+
+        Cmplt: //No Operation
 
     }
 
@@ -206,7 +249,7 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
 static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus)
 {
 
-    if (strstr(pcResp, "WFSTA:1") != NULL)
+    if (strstr(pcResp, "+WFSTA:1") != NULL)
     {
         *pbStatus = true;
     }
@@ -275,20 +318,18 @@ bool IsWiFiConnected()
 {
     bool bRetVal = false;
     bool bResponse = false;
-    char cCmdBuff[50];
+    char cCmdBuff[255];
 
-    bRcvdData = false;
+    bRxCmplt = false;
     strcpy(cCmdBuff, "AT+WFSTA\n\r");
     print_uart(cCmdBuff);
 
-    if (bRcvdData)
+    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(500));
+    printk("ConnResponse: %s\n\r", cCmdBuff);
+    ProcessConnectionStataus(cCmdBuff, &bResponse);
+    if (bResponse)
     {
-        printk("Response: %s\n\r", rx_buf);
-        ProcessConnectionStataus(rx_buf, &bResponse);
-        if (bResponse)
-        {
-            bRetVal = true;
-        }
+        bRetVal = true;
     }
 
     return bRetVal;
@@ -343,8 +384,8 @@ bool SendLocation()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
-    char cPayload[50];
-    char cATcmd[100];
+    char cPayload[50]; //Location data buffer
+    char cATcmd[100]; //AT command buffer 
 
     psLocationData = GetLocationData();
 
@@ -360,3 +401,5 @@ bool SendLocation()
 
     return bRetVal;
 }
+
+//EOF
