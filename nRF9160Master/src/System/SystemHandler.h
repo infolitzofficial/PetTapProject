@@ -23,7 +23,7 @@ typedef enum __eDevState
     BLE_CONNECTED,
     WIFI_DEVICE,
     BLE_DEVICE,
-    DEVICE_IDLE,
+    DEV_IDLE,
 }_eDevState;
 
 typedef struct __sGnssConfig

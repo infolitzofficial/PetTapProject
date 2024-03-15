@@ -15,7 +15,7 @@
 #define BUFFER_SIZE     255
 
 /******************************************TYPEDEFS*********************************************************/
-static _eDevState DevState = DEVICE_IDLE;
+static _eDevState DevState = DEV_IDLE;
 _sGnssConfig sGnssConfig = {0.0,0.0,false};
 struct k_timer Timer;
 static bool TimerExpired = false;
@@ -81,7 +81,7 @@ void ProcessDeviceState()
 
     switch(DevState)
     {
-        case DEVICE_IDLE:
+        case DEV_IDLE:
                     //Perform Connection
                     printk("INFO: IDLE STATE\n\r");
 
@@ -97,7 +97,7 @@ void ProcessDeviceState()
                     printk("Info: Before ble connect\n\r");
                     if (ConnectToBLE())
                     {
-                        DevState = WAIT_CONNECTION;
+                       DevState = WAIT_CONNECTION;
                     }
                     else
                     {
@@ -107,10 +107,22 @@ void ProcessDeviceState()
                     break;
 
         case WAIT_CONNECTION:
-                    printk("INFO: Waiting connection\n\r");
-                    if(IsWiFiConnected())
+                    TimeNow = sys_clock_tick_get();
+
+                    while ((sys_clock_tick_get() - TimeNow) < TICK_RATE * 10)
                     {
-                        DevState = WIFI_CONNECTED;
+                        printk("INFO: waiting connection\n\r");
+                        PollMsgs();
+                        k_msleep(500);
+                        if(IsWiFiConnected())
+                        {
+                            DevState = WIFI_CONNECTED;
+                        }
+                    }
+
+                    if (DevState == WAIT_CONNECTION)
+                    {
+                        SetDeviceState(DEV_IDLE);
                     }
                     break;
 
@@ -132,8 +144,16 @@ void ProcessDeviceState()
                             }
                         }
                     }
-                    /* Note: Need to handle the disconnection scenarion from wifi module
-                    */
+
+                    k_msleep(500);
+
+                    if (!IsWiFiConnected())
+                    {
+                        printk("INFO: AP is not visble\n\r");
+                        DisconnectFromWiFi();
+                        StopTimer();
+                        SetDeviceState(DEV_IDLE);
+                    }
                     break;
 
         case BLE_CONNECTED:

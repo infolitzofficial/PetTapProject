@@ -34,7 +34,7 @@ static bool bRxCmplt = false;
 
 K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
-static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus);
+static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus);
 static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc);
 static void SendCommand(const char *cmd, char *pcArgs[], int nArgc);
 
@@ -190,11 +190,11 @@ bool ConfigureAndConnectWiFi()
             bResponse = false;
             sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
             printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
-            TimeNow = sys_clock_tick_get();
+           TimeNow = sys_clock_tick_get();
 
-            while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 5))
+           while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 3))
             {
-                if (bRxCmplt)
+               if (bRxCmplt)
                 {
                     printk("Response: %s\n\r", cRxBuffer);
                     sAtCmdHandle[ucIdx].RespHdlr(cRxBuffer, &bResponse);
@@ -246,7 +246,7 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
  * @param [out] : pbStatus - AT command stauts true for success else failed
  * @return      : None
 */
-static void ProcessConnectionStataus(const char *pcResp, bool *pbStatus)
+static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus)
 {
 
     if (strstr(pcResp, "+WFSTA:1") != NULL)
@@ -326,14 +326,39 @@ bool IsWiFiConnected()
 
     k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(500));
     printk("ConnResponse: %s\n\r", cCmdBuff);
-    ProcessConnectionStataus(cCmdBuff, &bResponse);
+    ProcessConnectionStatus(cCmdBuff, &bResponse);
     if (bResponse)
     {
         bRetVal = true;
     }
 
     return bRetVal;
+}
 
+/**
+ * 
+*/
+bool DisconnectFromWiFi()
+{
+    
+    bool bRetVal = false;
+    bool bResponse = false;
+    char cCmdBuff[255];
+
+    bRxCmplt = false;
+    strcpy(cCmdBuff, "AT+WFQAP\n\r");
+    print_uart(cCmdBuff);
+
+    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(500));
+    printk("Response: %s\n\r", cCmdBuff);
+    ProcessResponse(cCmdBuff, &bResponse);
+
+    if (bResponse)
+    {
+        bRetVal = true;
+    }
+
+    return bRetVal;
 }
 
 /**

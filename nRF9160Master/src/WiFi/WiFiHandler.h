@@ -49,6 +49,7 @@ bool ConfigureAndConnectWiFi();
 bool IsWiFiConnected();
 bool SendLocation();
 bool ReadBuff(void);
+bool DisconnectFromWiFi();
 #endif
 
 //EOF
