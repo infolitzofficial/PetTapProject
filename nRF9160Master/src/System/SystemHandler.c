@@ -17,6 +17,7 @@
 /******************************************TYPEDEFS*********************************************************/
 static _eDevState DevState = DEV_IDLE;
 _sGnssConfig sGnssConfig = {0.0,0.0,false};
+static bool bConfigStatus = false;
 struct k_timer Timer;
 static bool TimerExpired = false;
 
@@ -50,7 +51,7 @@ static bool ConnectToBLE()
  * @param [out] : none
  * @return      : None
 */
-void PollMsgs()
+void ProcessBleMsg()
 {
     uint32_t TimeNow = 0;
     uint8_t ucBuff[BUFFER_SIZE];
@@ -76,93 +77,88 @@ void PollMsgs()
 void ProcessDeviceState()
 {
     uint32_t TimeNow = 0;
-
-    PollMsgs();
+    int nRetry = 2;
 
     switch(DevState)
     {
         case DEV_IDLE:
-                    //Perform Connection
+                    //Perform Configuration
                     printk("INFO: IDLE STATE\n\r");
 
-                    if (ConfigureAndConnectWiFi())
+                    do
                     {
-                        DevState = WAIT_CONNECTION;
-                    }
-                    else
-                    {
-                        printk("ERR: WiFi Conn failed\n\r");
-                    }
+                        if (ConfigureWiFi())
+                        {
+                            bConfigStatus = true;
+                            break;
+                        }
+                        else
+                        {
+                            printk("ERR: WiFi Conn failed\n\r");
+                        }
+                    } while (nRetry-- > 0);
 
-                    printk("Info: Before ble connect\n\r");
+                    SetDeviceState(WAIT_CONNECTION);
+                    break;
+
+        case WAIT_CONNECTION:
+                    printk("Info: Sending connection request to BLE\n\r");
                     if (ConnectToBLE())
                     {
-                       DevState = WAIT_CONNECTION;
+                        SetDeviceState(WAIT_CONNECTION);
                     }
                     else
                     {
                         printk("ERR: BLE Conn failed\n\r");                        
                     }
 
-                    break;
-
-        case WAIT_CONNECTION:
-                    TimeNow = sys_clock_tick_get();
-
-                    while ((sys_clock_tick_get() - TimeNow) < TICK_RATE * 10)
-                    {
-                        printk("INFO: waiting connection\n\r");
-                        PollMsgs();
-                        k_msleep(500);
-                        if(IsWiFiConnected())
-                        {
-                            DevState = WIFI_CONNECTED;
-                        }
-                    }
-
-                    if (DevState == WAIT_CONNECTION)
+                    if (!bConfigStatus)
                     {
                         SetDeviceState(DEV_IDLE);
                     }
+
+                    printk("INFO: waiting connection\n\r");
+                    k_msleep(2000);
                     break;
 
         case WIFI_CONNECTED:
                     printk("INFO: Connected to WiFi\n\r");
                     InitTimerTask(30);
-                    DevState = WIFI_DEVICE;
+                    SetDeviceState(WIFI_DEVICE);
                     break;
 
         case WIFI_DEVICE:
                     if (TimerExpired)
-                    {
-                        if (IsLocationDataOK())
+                    {   if (IsWiFiConnected)
                         {
-                            if (SendLocation())
+                            if (IsLocationDataOK())
                             {
-                                printk("INFO: Location sent success\n\r");
-                                TimerExpired=false;
+                                if (SendLocation())
+                                {
+                                    printk("INFO: Location sent success\n\r");
+                                    TimerExpired=false;
+                                }
                             }
-                        }
+                        }                   
                     }
 
                     k_msleep(500);
+                    break;
 
-                    if (!IsWiFiConnected())
-                    {
-                        printk("INFO: AP is not visble\n\r");
-                        DisconnectFromWiFi();
-                        StopTimer();
-                        SetDeviceState(DEV_IDLE);
-                    }
+        case WIFI_DISCONNECTED:
+                    printk("INFO: AP is not visble\n\r");
+                    DisconnectFromWiFi();
+                    StopTimer();
+                    SetDeviceState(WAIT_CONNECTION);
                     break;
 
         case BLE_CONNECTED:
                     printk("INFO: Connected to BLE\n\r");
-                    DevState = BLE_DEVICE;
+                    SetDeviceState(BLE_DEVICE);
                     break;
 
         case BLE_DEVICE:
-                    //No Op
+                    //No Operation
                     break;
 
         default        :

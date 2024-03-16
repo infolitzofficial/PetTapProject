@@ -19,6 +19,7 @@
 typedef enum __eDevState
 {
     WIFI_CONNECTED,
+    WIFI_DISCONNECTED,
     WAIT_CONNECTION,
     BLE_CONNECTED,
     WIFI_DEVICE,
@@ -35,7 +36,7 @@ typedef struct __sGnssConfig
 
 /**********************************************FUNCTION DECLARATIONS*************************************/
 void ProcessDeviceState();
-void PollMsgs();
+void ProcessBleMsg();
 _eDevState *GetDeviceState();
 void SetDeviceState(_eDevState DeviceState);
 bool IsLocationDataOK(void);

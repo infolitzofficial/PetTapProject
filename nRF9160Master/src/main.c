@@ -1231,6 +1231,8 @@ static void SystemTask()
 {
 	while (1)
 	{
+		ProcessWiFiMsgs();
+		ProcessBleMsg();
 		ProcessDeviceState();
 		k_msleep(10);
 	}

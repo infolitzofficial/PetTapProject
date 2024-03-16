@@ -12,7 +12,7 @@
 #include "BleHandler.h"
 
 /*******************************************MACROS**********************************************************/
-#define MSG_SIZE        1024
+#define MSG_SIZE        255
 #define PAYLOAD_SIZE    75
 
 /******************************************TYPEDEFS*********************************************************/
@@ -28,6 +28,7 @@ static uint16_t usRxBufferIdx = 0;
 /*Flag for LORA packet receive completion*/
 static bool bRxCmplt = false;
 
+K_MSGQ_DEFINE(BleMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
  * @brief       : Callback function for UART reception
@@ -87,6 +88,7 @@ bool ReadBuffer(void)
                             cRxBuffer[usRxBufferIdx++] = ucByte;
                             cRxBuffer[usRxBufferIdx++] = '\0';
                             bRxCmplt = true;
+                            k_msgq_put(&BleMsgQueue, &cRxBuffer, K_NO_WAIT);
                             eUartRxState = START;
                             printk(".\n\r");
                         }
@@ -189,18 +191,18 @@ void ProcessBleResponse(const char *pcResp, bool *pbStatus)
 }
 
 /**
- * @brief Read LoRa packet
- * @param pucBuffer : LoRa packet buffer
- * @return true for success
+ * @brief       : Read BLE packet
+ * @param [in]  : None
+ * @param [out] : pucBuffer : BLE packet buffer
+ * @return      : true for success
 */
 bool ReadPacket(uint8_t *pucBuffer)
 {
     bool bRetVal = false;
 
-    if (bRxCmplt)
+    if (0 == k_msgq_get(&BleMsgQueue, pucBuffer, K_MSEC(100)))
     {
-        memcpy(pucBuffer, cRxBuffer, usRxBufferIdx);
-        bRxCmplt = false;
+        printk("Data Received\n\r");
         bRetVal = true;
     }
 
@@ -208,7 +210,10 @@ bool ReadPacket(uint8_t *pucBuffer)
 }
 
 /**
- * 
+ * @brief       : Send location data to BLE
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool SendLocationToBle()
 {

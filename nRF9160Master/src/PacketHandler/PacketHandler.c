@@ -121,7 +121,7 @@ bool ProcessCmd(char *pcCmd)
 #endif
         if (strcmp(pcCmd, "DISCONNECT") == 0)
         {
-            SetDeviceState(DEV_IDLE);
+            SetDeviceState(WAIT_CONNECTION);
         }
         else if(strcmp(pcCmd, "LOCATION") == 0)
         {
@@ -152,7 +152,7 @@ static void UpdateStateAfterResponse(bool bStatus)
                             }
                             else
                             {
-                                SetDeviceState(DEV_IDLE);
+                                SetDeviceState(WAIT_CONNECTION);
                             }
                             break;
 

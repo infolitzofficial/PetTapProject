@@ -45,8 +45,9 @@ typedef struct __sAtCmdHandle
 /***********************************************FUNCTION DECLARATIONS**************************************/
 bool InitUart(void);
 void ProcessResponse(const char *pcResp, bool *pbStatus);
-bool ConfigureAndConnectWiFi();
+bool ConfigureWiFi();
 bool IsWiFiConnected();
+void ProcessWiFiMsgs();
 bool SendLocation();
 bool ReadBuff(void);
 bool DisconnectFromWiFi();

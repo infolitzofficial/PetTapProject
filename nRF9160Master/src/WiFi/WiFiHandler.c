@@ -20,6 +20,7 @@
 #define CFG_NUM 	        1
 #define CFG_NAME 	        "latlong"
 #define RETRY_COUNT         2
+
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 bool bResponse = false;         //For check response received for AT command
@@ -35,6 +36,7 @@ static bool bRxCmplt = false;
 K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
 static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus);
+static void CheckConnection(const char *pcResp, bool *pbStatus);
 static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc);
 static void SendCommand(const char *cmd, char *pcArgs[], int nArgc);
 
@@ -157,17 +159,18 @@ static void SendCommand(const char *cmd, char *pcArgs[], int nArgc)
 }
 
 /**
- * @brief       : Configure and attempt connection to WiFi. Configuration
+ * @brief       : Configure WiFi. Configuration
  *                includes AWS configurations also
  * @param [in]  : None
  * @param [out] : None
  * @return      : true for success
 */
-bool ConfigureAndConnectWiFi()
+bool ConfigureWiFi()
 {
     bool bRetVal = false;
     uint8_t ucIdx = 0;
     uint32_t TimeNow=0;
+    char cRespBuff[255] = {0};
     int8_t nRetry = 0;
 
     for (ucIdx = 0; ucIdx < sizeof(sAtCmdHandle)/sizeof(sAtCmdHandle[0]); ucIdx++)
@@ -186,24 +189,21 @@ bool ConfigureAndConnectWiFi()
 
         do
         {
-            bRxCmplt = false;
-            bResponse = false;
             sAtCmdHandle[ucIdx].CmdHdlr(sAtCmdHandle[ucIdx].pcCmd, sAtCmdHandle[ucIdx].pcArgs, sAtCmdHandle[ucIdx].nArgsCount);
             printk("Sending: %s\n\r", sAtCmdHandle[ucIdx].pcCmd);
-           TimeNow = sys_clock_tick_get();
+            k_msleep(100);
 
-           while (sys_clock_tick_get() - TimeNow < (TICK_RATE * 3))
+            if (0 == k_msgq_get(&UartMsgQueue, cRespBuff, K_MSEC(100)))
             {
-               if (bRxCmplt)
+                printk("Response: %s\n\r", cRespBuff);
+                k_msleep(100);
+                sAtCmdHandle[ucIdx].RespHdlr(cRespBuff, &bResponse);
+                if (bResponse)
                 {
-                    printk("Response: %s\n\r", cRxBuffer);
-                    sAtCmdHandle[ucIdx].RespHdlr(cRxBuffer, &bResponse);
-                    if (bResponse)
-                    {
-                        printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
-                        bRetVal = true;
-                        goto Cmplt;
-                    }
+                    printk("OK: cmd%s", sAtCmdHandle[ucIdx].pcCmd);
+                    k_msleep(100);
+                    bRetVal = true;
+                    goto Cmplt;
                 }
             }
 
@@ -220,6 +220,75 @@ bool ConfigureAndConnectWiFi()
 
     return bRetVal;
 
+}
+
+/**
+ * @brief       : Check whether configured AP is disconnected
+ * @param [in]  : pcResp - Response from DA16200
+ * @param [out] : pbStatus - Status 
+ * @return      : None
+*/
+static void CheckAPDisconnected(const char *pcResp, bool *pbStatus)
+{
+    if (strstr(pcResp, "+WFDAP:0") != NULL)
+    {
+        *pbStatus = true;
+    }
+    else
+    {
+        *pbStatus = false;
+    } 
+}
+
+/**
+ * @brief       : Check whether configured AP is connected
+ * @param [in]  : pcResp - Response from DA16200
+ * @param [out] : pbStatus - Status 
+ * @return      : None
+*/
+static void CheckAPConnected(const char *pcResp, bool *pbStatus)
+{
+    if (strstr(pcResp, "+WFJAP:1") != NULL)
+    {
+        *pbStatus = true;
+    }
+    else
+    {
+        *pbStatus = false;
+    } 
+}
+
+/**
+ * @brief       : Processs Msgs from Wifi
+ * @param [in]  : None
+ * @param [out] : None 
+ * @return      : None
+*/
+void ProcessWiFiMsgs()
+{
+    char cRxBuffer[255];
+
+    _eDevState *DevState = NULL;
+    bool bStatus = false;
+
+    DevState = GetDeviceState();
+
+    if (0 == k_msgq_get(&UartMsgQueue, cRxBuffer, K_MSEC(100)))
+    {
+        CheckAPConnected(cRxBuffer, &bStatus);
+
+        if (bStatus)
+        {
+            SetDeviceState(WIFI_CONNECTED);
+        }
+        
+        CheckAPDisconnected(cRxBuffer, &bStatus);
+
+        if (bStatus)
+        {
+            SetDeviceState(WIFI_DISCONNECTED);
+        }
+    }
 }
 
 /**
@@ -248,7 +317,6 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
 */
 static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus)
 {
-
     if (strstr(pcResp, "+WFSTA:1") != NULL)
     {
         *pbStatus = true;
@@ -257,7 +325,6 @@ static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus)
     {
         *pbStatus = false;
     }  
-
 }
 
 /**
@@ -324,7 +391,7 @@ bool IsWiFiConnected()
     strcpy(cCmdBuff, "AT+WFSTA\n\r");
     print_uart(cCmdBuff);
 
-    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(500));
+    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(100));
     printk("ConnResponse: %s\n\r", cCmdBuff);
     ProcessConnectionStatus(cCmdBuff, &bResponse);
     if (bResponse)
@@ -336,7 +403,10 @@ bool IsWiFiConnected()
 }
 
 /**
- * 
+ * @brief       : Disconnect DA module
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
 */
 bool DisconnectFromWiFi()
 {
@@ -349,7 +419,7 @@ bool DisconnectFromWiFi()
     strcpy(cCmdBuff, "AT+WFQAP\n\r");
     print_uart(cCmdBuff);
 
-    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(500));
+    k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(100));
     printk("Response: %s\n\r", cCmdBuff);
     ProcessResponse(cCmdBuff, &bResponse);
 
