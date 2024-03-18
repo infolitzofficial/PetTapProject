@@ -22,6 +22,7 @@ typedef enum __eDevState
     BLE_CONN_REQ,
     BLE_CONNECTED,
     BLE_DISCONNECTED,
+    BLE_CONFIG
 }_eDevState;
 
 /**********************************************FUNCTION DECLARATIONS*************************************/
