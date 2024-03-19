@@ -1,0 +1,251 @@
+/*
+ * Copyright (c) 2020 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ */
+
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <zephyr/kernel.h>
+#include <zephyr/types.h>
+#include <zephyr/sys/printk.h>
+#include "zephyr/sys/util.h"
+#include <zephyr/device.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/gpio.h>
+
+#include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/bluetooth/gatt.h>
+#include <zephyr/bluetooth/uuid.h>
+#include <zephyr/bluetooth/services/bas.h>
+#include <zephyr/bluetooth/services/hrs.h>
+
+#include <dk_buttons_and_leds.h>
+#include "BleService.h"
+
+#define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
+#define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
+
+#define RUN_STATUS_LED          DK_LED1
+#define CON_STATUS_LED          DK_LED2
+#define RUN_LED_BLINK_INTERVAL  1000
+#define NOTIFY_INTERVAL         1000
+
+/*UART for AT commands via DA16200*/
+/* change this to any other UART peripheral if desired */
+#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
+#define MSG_SIZE 32
+#define BUF_SIZE 64
+  
+static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
+ 
+/* receive buffer used in UART ISR callback */
+static char rx_buf[MSG_SIZE];
+static int rx_buf_pos;
+static bool bRcvdData = false;
+
+char cLat[] = "10.059065067392345W,76.34034918061742N";
+char cStatok[] = "WiFi connected";
+char cStatnok[] = "WiFi Not connected";
+
+static void start_advertising(void);
+
+static const struct bt_data ad[] = {
+	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)), 
+	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
+};
+
+
+static void connected(struct bt_conn *conn, uint8_t conn_err)
+{
+	int err;
+	struct bt_conn_info info;
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	if (conn_err) {
+		printk("Connection failed (err %d)\n", conn_err);
+		return;
+	}
+
+	err = bt_conn_get_info(conn, &info);
+	if (err) {
+		printk("Failed to get connection info (err %d)\n", err);
+	} else {
+		const struct bt_conn_le_phy_info *phy_info;
+		phy_info = info.le.phy;
+
+		// printk("Connected: %s, tx_phy %u, rx_phy %u\n",
+		//        addr, phy_info->tx_phy, phy_info->rx_phy);
+	}
+
+	dk_set_led_on(CON_STATUS_LED);
+}
+
+static void disconnected(struct bt_conn *conn, uint8_t reason)
+{
+	printk("Disconnected (reason 0x%02x)\n", reason);
+
+	
+	dk_set_led_off(CON_STATUS_LED);
+}
+
+BT_CONN_CB_DEFINE(conn_callbacks) = {
+	.connected = connected,
+	.disconnected = disconnected,
+};
+
+
+static void start_advertising(void)
+{
+		int err;
+	
+	err =  bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), NULL, 0);
+	if (err) {
+		printk("Failed to start advertising set (err %d)\n", err);
+		return;
+	}
+
+}
+
+ 
+/*
+ * Read characters from UART until line end is detected. Afterwards push the
+ * data to the message queue.
+ */
+void serial_cb(const struct device *dev, void *user_data)
+{
+    uint8_t c;
+ 
+    if (!uart_irq_update(uart_dev)) {
+        return;
+    }
+ 
+    if (!uart_irq_rx_ready(uart_dev)) {
+        return;
+    }
+    /* read until FIFO empty */
+    while (uart_fifo_read(uart_dev, &c, 1) == 1)
+    {
+        if ((c == '\n' || c == '\r') && rx_buf_pos > 0)
+        {
+            /* terminate string */
+            rx_buf[rx_buf_pos] = '\0';
+			bRcvdData = true;          
+            /* reset the buffer (it was copied to the msgq) */          
+            memset(rx_buf,0,strlen(rx_buf));
+            rx_buf_pos = 0;        
+        }
+        else if (rx_buf_pos < (sizeof(rx_buf) - 1))
+        {
+            rx_buf[rx_buf_pos++] = c;
+        }      
+    }  
+}
+ 
+/*
+ * Print a null-terminated string character by character to the UART interface
+ */
+void print_uart(char *buf)
+{
+    int msg_len = strlen(buf);
+ 
+    for (int i = 0; i < msg_len; i++) {
+        uart_poll_out(uart_dev, buf[i]);
+    }
+}
+
+// void getWiFiCred()
+// {
+
+// }
+
+int main(void)
+{
+	uint32_t led_status = 0;
+	int err;
+
+
+	err = dk_leds_init();
+	if (err) {
+		printk("LEDs init failed (err %d)\n", err);
+		return 0;
+	}
+
+	err = bt_enable(NULL);
+	if (err) {
+		printk("Bluetooth init failed (err %d)\n", err);
+		return 0;
+	}
+
+	printk("Bluetooth initialized\n");
+	
+	start_advertising();
+	//UART AT commands
+	char count[] = "93.35N77.69E";    
+    char temp_buf[BUF_SIZE];
+    if (!device_is_ready(uart_dev))
+    {
+        printk("UART device not found!");
+        return 0;
+    }
+    /* configure interrupt and callback to receive data */
+    int ret = uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
+ 
+    if (ret < 0)
+    {
+        if (ret == -ENOTSUP) {
+            printk("Interrupt-driven UART API support not enabled\n");
+        } else if (ret == -ENOSYS) {
+            printk("UART device does not support interrupt-driven API\n");
+        } else {
+            printk("Error setting UART callback: %d\n", ret);
+        }
+        return 0;
+    }
+	//memset(rx_buf,0,strlen(rx_buf));
+    uart_irq_rx_enable(uart_dev);
+    k_msleep(1000);
+    print_uart("ATE\r\n");
+     k_msleep(1000);
+     print_uart("AT+AWS=CFG  1 latshad 1 1\r\n");
+     k_msleep(10000);
+     print_uart("AT+AWS=CMD MCU_DATA 1 latshad senstrigger\r\n"); 
+     k_msleep(20000);
+    print_uart("AT+AWS=CFG  2 latlon 1 0\r\n");
+		
+	for (;;) 
+	{
+		dk_set_led(RUN_STATUS_LED, (++led_status) % 2);
+		k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
+		
+
+		if(IsNotificationenabled())
+		{
+			LocationSensordataNotify(cLat, sizeof(cLat));
+		}
+		if(WiFiConnectOK())  
+		{
+			WiFiConnectNotify(cStatok, sizeof(cStatok));		//use wConnected when da wifi set up AT command is successful
+			//getWiFiCred();
+		}
+		else 
+		{
+			WiFiConnectNotify(cStatnok, sizeof(cStatnok));
+		}
+		if(bRcvdData)
+        {
+			//memset(rx_buf,0,strlen(rx_buf));
+			bRcvdData = false;
+            k_msleep(10000);           
+            //count = count + 1.1234;
+            sprintf(temp_buf, "AT+AWS=CMD MCU_DATA 2 latlon %s\r\n", count);
+            print_uart(temp_buf); 
+                      
+        }
+	}
+}
