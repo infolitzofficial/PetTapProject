@@ -8,6 +8,8 @@
 #include "PacketHandler.h"
 #include "../BLE/BleHandler.h"
 #include "../System/SystemHandler.h"
+#include "zephyr/kernel.h"
+#include <sys/_stdint.h>
 
 /*******************************************************MACROS*****************************************************/
 
@@ -16,6 +18,7 @@
 /*******************************************************PRIVATE VARIABLES******************************************/
 
 /*******************************************************PUBLIC VARIABLES*******************************************/
+char new_cred[50] = {};
 
 /*******************************************************FUNCTION DEFINITION*****************************************/
 
@@ -77,7 +80,6 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
 bool ProcessRcvdPacket(_sPacket *psPacket)
 {
     bool bRetVal = false;
-   // printk("\nchk- Pkt type is %s\n", psPacket->PacketType);
 
     if (psPacket)
     {
@@ -100,6 +102,33 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
 
     return bRetVal;
 }
+
+/**
+ * @brief      : parseWifiCred
+ * @param [in] : *pcCmd
+ * @param [out]: None
+ * @return     : None
+*/
+void parseWifiCred(const char *pcCmd)
+{
+    char cSSID[20] = {};
+    char cPassword[50] = {};
+    sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword);
+    sprintf(new_cred, "%s,%s", cSSID, cPassword);
+    printk("Concatenated cred: %s\n", new_cred);
+}
+
+/**
+ * @brief      : getNewCred
+ * @param [in] : None
+ * @param [out]: None
+ * @return     : new_cred
+*/
+const char* getNewCred()
+{
+    return new_cred;
+}
+
 
 /**
  * @brief      : Process command
@@ -135,10 +164,12 @@ bool ProcessCmd(char *pcCmd)
                 printk("Didnt get location fix\n\r");
             }
         }
-        if (strncmp(pcCmd, "ssid", 4) == 0)
-            printk("chk - new ssid/pwd is %s \n\r", pcCmd);
-        else
-            printk("chk - rcvd  ssid/pwd is %s \n\r", pcCmd);
+        else if(strstr(pcCmd, "ssid") != NULL)
+        {
+            printk("Config: %s\n\r", pcCmd);
+            parseWifiCred(pcCmd);
+        }
+        printk("Retrieved cred: %s\n", getNewCred());   //getter for the modified wifi cred to be used in wifi module
     }
 }
 
