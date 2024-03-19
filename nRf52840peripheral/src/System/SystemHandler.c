@@ -86,6 +86,11 @@ void ProcessDeviceState()
                     BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
                     SendData((uint8_t *)&sPacket, sizeof(sPacket));
                     break;
+        case BLE_CONFIG:
+                    GetRcvdData(ucPayload);
+                    BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
+                    SendData((uint8_t *)&sPacket, sizeof(sPacket));
+                    SetDeviceState(BLE_CONNECTED);
 
         default        :
                     break;

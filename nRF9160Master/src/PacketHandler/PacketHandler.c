@@ -134,6 +134,10 @@ bool ProcessCmd(char *pcCmd)
                 printk("Didnt get location fix\n\r");
             }
         }
+        else if(strstr(pcCmd, "ssid") != NULL)
+        {
+            printk("Config: %s\n\r", pcCmd);
+        }
     }
 }
 

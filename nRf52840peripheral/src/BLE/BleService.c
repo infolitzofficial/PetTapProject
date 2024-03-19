@@ -12,7 +12,7 @@
 #include "../System/SystemHandler.h"
 
 /**************************** MACROS********************************************/
-#define VND_MAX_LEN 12
+#define VND_MAX_LEN 255
 
 
 /**************************** GLOBALS*******************************************/
@@ -73,9 +73,52 @@ static ssize_t CharaWrite(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 
 	memcpy(value + offset, buf, len);
 	memcpy(ucWriteBuf, value, len);
+	SetDeviceState(BLE_CONFIG);
 	bRcvdData = true;
 
 	return len;
+}
+
+/**
+ * @brief MTU exchange callback
+ * @param conn 	  : Connection handle
+ * @param att_err : Error code on MTU exchange
+ * @param params  : Exchange params
+ * @return None
+*/
+static void MTUExchangeCb(struct bt_conn *conn, uint8_t att_err,
+    					struct bt_gatt_exchange_params *params)
+{
+    if (att_err)
+    {
+        printk("\n\rMTU exchange returned with error code %d\n\r", att_err);
+    }
+    else
+    {
+        printk("\n\rMTU sucessfully set to %d\n\r", CONFIG_BT_L2CAP_TX_MTU);
+    }
+}
+
+/**
+ * @brief Initiate MTU exchange from peripheral side
+ * @param conn  : connection handle
+ * @return None
+*/
+static void InitiateMTUExcahnge(struct bt_conn *conn)
+{
+    int err;
+    static struct bt_gatt_exchange_params exchange_params;
+    exchange_params.func = MTUExchangeCb;
+
+    err = bt_gatt_exchange_mtu(conn, &exchange_params);
+    if (err)
+    {
+        printk("\n\rMTU exchange failed (err %d)\n\r", err);
+    }
+    else
+    {
+        printk("\n\rMTU exchange pending ...\n\r");
+    }
 }
 
 /**
@@ -125,6 +168,7 @@ static void connected(struct bt_conn *conn, uint8_t err)
 {
 	bConnected = true;
 	printk("Connected\n");
+	InitiateMTUExcahnge(conn);
 }
 
 /**

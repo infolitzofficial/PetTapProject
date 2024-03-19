@@ -118,7 +118,7 @@ void ProcessDeviceState()
                     }
 
                     printk("INFO: waiting connection\n\r");
-                    k_msleep(2000);
+                    k_msleep(500);
                     break;
 
         case WIFI_CONNECTED:
