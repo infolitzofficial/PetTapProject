@@ -34,7 +34,7 @@ void PollMsgs()
 
     if (ReadPacket(ucBuff))
     {
-        printk("Received packet\n\r");
+        printk("Received packet %s\n\r", ucBuff);
 
         if (ParsePacket(ucBuff, &sPacket))
         {
@@ -86,7 +86,13 @@ void ProcessDeviceState()
                     BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
                     SendData((uint8_t *)&sPacket, sizeof(sPacket));
                     break;
-
+        case BLE_CONFIG:
+                    GetRcvdData(ucPayload);
+                    printk("chk- test payload- %s\n", ucPayload);
+                    BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
+                    SendData((uint8_t *)&sPacket, sizeof(sPacket));
+                    SetDeviceState(BLE_CONNECTED);                  //chk
+                    break;
         default        :
                     break;
     }

@@ -10,6 +10,7 @@
 #include "BleService.h"
 #include "UartHandler.h"
 #include "../System/SystemHandler.h"
+#include "zephyr/sys/printk.h"
 
 /**************************** MACROS********************************************/
 #define VND_MAX_LEN 12
@@ -72,9 +73,11 @@ static ssize_t CharaWrite(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	}
 
 	memcpy(value + offset, buf, len);
+	memset(ucWriteBuf, 0, sizeof(ucWriteBuf));
 	memcpy(ucWriteBuf, value, len);
+	printk("\n\nInside charawrite- %s\n", ucWriteBuf);
 	bRcvdData = true;
-
+	SetDeviceState(BLE_CONFIG);
 	return len;
 }
 
@@ -104,12 +107,12 @@ void BleSensorDataNotify(const struct bt_gatt_attr *attr, uint16_t value)
 */
 BT_GATT_SERVICE_DEFINE(PetTapService,
     BT_GATT_PRIMARY_SERVICE(&sServiceUUID),
-    BT_GATT_CHARACTERISTIC(&sUartReadChara.uuid,
+    BT_GATT_CHARACTERISTIC(&sUartReadChara.uuid,			//location chara
                 BT_GATT_CHRC_NOTIFY,
                 BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
                 CharaRead, CharaWrite, ucSensorData),
     BT_GATT_CCC(BleSensorDataNotify, (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE)),
-	BT_GATT_CHARACTERISTIC(&sUartResponseChara.uuid,
+	BT_GATT_CHARACTERISTIC(&sUartResponseChara.uuid,			//read ssid pwd
 				BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
 					BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 					CharaRead,CharaWrite,ucSensorData)
@@ -200,6 +203,7 @@ void GetRcvdData(uint8_t *pucData)
 	{
 		memcpy(pucData, ucWriteBuf, sizeof(ucWriteBuf));
 	}
+	printk("\ngetrcvd call bk- %s \n", ucWriteBuf);
 }
 
 /**

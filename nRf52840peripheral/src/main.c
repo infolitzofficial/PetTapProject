@@ -60,6 +60,7 @@ int main(void)
     {
         PollMsgs();
         ProcessDeviceState();
+        k_msleep(100);
     }
 
     printk("CRITICAL: Program exit");

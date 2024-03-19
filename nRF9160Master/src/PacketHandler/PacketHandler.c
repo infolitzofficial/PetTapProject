@@ -77,6 +77,7 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
 bool ProcessRcvdPacket(_sPacket *psPacket)
 {
     bool bRetVal = false;
+   // printk("\nchk- Pkt type is %s\n", psPacket->PacketType);
 
     if (psPacket)
     {
@@ -134,6 +135,10 @@ bool ProcessCmd(char *pcCmd)
                 printk("Didnt get location fix\n\r");
             }
         }
+        if (strncmp(pcCmd, "ssid", 4) == 0)
+            printk("chk - new ssid/pwd is %s \n\r", pcCmd);
+        else
+            printk("chk - rcvd  ssid/pwd is %s \n\r", pcCmd);
     }
 }
 
