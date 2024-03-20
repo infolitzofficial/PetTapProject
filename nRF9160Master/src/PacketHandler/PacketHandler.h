@@ -47,9 +47,7 @@ bool ProcessRcvdPacket(_sPacket *psPacket);
 bool ProcessCmd(char *pcCmd);
 bool ProcessResp(char *pcResp);
 bool ProcessPayload(char *pcPayload);
-void parseWifiCred(const char *pcCmd);
-const char* getNewCred();
-void setNewCred();
+void parseWifiCred(const char *pcCmd, char *pcCredential);
 #endif
 
 //EOF

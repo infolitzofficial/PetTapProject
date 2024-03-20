@@ -29,7 +29,7 @@ bool bResponse = false;         //For check response received for AT command
 /*Buffer for UART receive data*/
 static uint8_t cRxBuffer[MSG_SIZE] = {0};
 /*State of UART receive*/
-static _eUartRxState eUartRxState = START;
+static _eWiFiUartRxState eWiFiUartRxState = UART_START;
 /*Index of Receiving buffer*/
 static uint16_t usRxBufferIdx = 0;
 /*Flag for packet receive completion*/
@@ -68,29 +68,29 @@ bool ReadBuff(void)
  
     if (uart_fifo_read(uart_dev, &ucByte, 1) == 1)
     {
-        switch(eUartRxState)
+        switch(eWiFiUartRxState)
         {
-            case START: if (ucByte != '\n' && ucByte != '\r')
+            case UART_START: if (ucByte != '\n' && ucByte != '\r')
                         {
                             usRxBufferIdx = 0;
                             memset(cRxBuffer, 0, sizeof(cRxBuffer));
                             cRxBuffer[usRxBufferIdx++] = ucByte;
-                            eUartRxState = RCV;
+                            eWiFiUartRxState = UART_RCV;
                         }
                         break;
  
-            case RCV:   if (ucByte == '\n')
+            case UART_RCV:   if (ucByte == '\n')
                         {
                            
                             cRxBuffer[usRxBufferIdx++] = '\0';
                             bRxCmplt = true;
-                            eUartRxState = START;
+                            eWiFiUartRxState = UART_START;
                             k_msgq_put(&UartMsgQueue, &cRxBuffer, K_NO_WAIT);
                         }
                         cRxBuffer[usRxBufferIdx++] = ucByte;
                         break;
  
-            case END:   eUartRxState = START;
+            case UART_END:   eWiFiUartRxState = UART_START;
                         usRxBufferIdx = 0;
                         break;
  
@@ -258,6 +258,29 @@ static void CheckAPConnected(const char *pcResp, bool *pbStatus)
     {
         *pbStatus = false;
     } 
+}
+
+/**
+ * @brief      : GetAPCredentials
+ * @param [in] : None
+ * @param [out]: None
+ * @return     : WIFI_SSID_PWD
+*/
+char *GetAPCredentials(void)
+{
+    return WIFI_SSID_PWD;
+}
+
+/**
+ * @brief      : SetAPCredentials
+ * @param [in] : pcCredential
+ * @param [out]: None
+ * @return     : None
+*/
+void SetAPCredentials(char *pcCredential)
+{
+    memset(WIFI_SSID_PWD, 0, sizeof(WIFI_SSID_PWD));
+    strcpy(WIFI_SSID_PWD, pcCredential);
 }
 
 /**

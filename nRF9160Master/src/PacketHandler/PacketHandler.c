@@ -6,6 +6,7 @@
 */
 /*******************************************************INCLUDES***************************************************/
 #include "PacketHandler.h"
+#include "../WiFi/WiFiHandler.h"
 #include "../BLE/BleHandler.h"
 #include "../System/SystemHandler.h"
 #include "zephyr/kernel.h"
@@ -18,8 +19,6 @@
 /*******************************************************PRIVATE VARIABLES******************************************/
 
 /*******************************************************PUBLIC VARIABLES*******************************************/
-char new_cred[80] = {};
-extern char WIFI_SSID_PWD[80];
 
 /*******************************************************FUNCTION DEFINITION*****************************************/
 
@@ -106,39 +105,17 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
 
 /**
  * @brief      : parseWifiCred
- * @param [in] : *pcCmd
- * @param [out]: None
+ * @param [in] : pcCmd
+ * @param [out]: pcCredential
  * @return     : None
 */
-void parseWifiCred(const char *pcCmd)
+void parseWifiCred(const char *pcCmd, char *pcCredential)
 {
-    char cSSID[20] = {};
-    char cPassword[50] = {};
-    sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword);
-    sprintf(new_cred, "%s,%s", cSSID, cPassword);
-    //printk("New cred: %s\n", new_cred);
-}
-
-/**
- * @brief      : getNewCred
- * @param [in] : None
- * @param [out]: None
- * @return     : new_cred
-*/
-const char* getNewCred()
-{
-    return new_cred;
-}
-
-/**
- * @brief      : setNewCred
- * @param [in] : None
- * @param [out]: None
- * @return     : None
-*/
-void setNewCred()
-{
-   strcpy(WIFI_SSID_PWD, new_cred);
+    char cSSID[20] = {0};
+    char cPassword[50] = {0};
+    sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword); //wifi cred format: ssid:<new ssid>,pwd:<new password> //no space after comma
+    sprintf(pcCredential, "%s,%s", cSSID, cPassword);
+    //printk("New WiFi cred: %s\n", pcCredential);
 }
 
 /**
@@ -150,6 +127,7 @@ void setNewCred()
 bool ProcessCmd(char *pcCmd)
 {
     bool bRetVal = false;
+    char cBuffer[80] = {0};
 
     if (pcCmd)
     {
@@ -178,8 +156,9 @@ bool ProcessCmd(char *pcCmd)
         else if(strstr(pcCmd, "ssid") != NULL)
         {
             // printk("Config: %s\n\r", pcCmd);
-            parseWifiCred(pcCmd);
-            setNewCred();
+            parseWifiCred(pcCmd, cBuffer);
+            SetAPCredentials(cBuffer);
+            DisconnectFromWiFi();
             SetDeviceState(DEV_IDLE);
         }
     }
