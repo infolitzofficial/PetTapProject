@@ -18,7 +18,8 @@
 /*******************************************************PRIVATE VARIABLES******************************************/
 
 /*******************************************************PUBLIC VARIABLES*******************************************/
-char new_cred[50] = {};
+char new_cred[80] = {};
+extern char WIFI_SSID_PWD[80];
 
 /*******************************************************FUNCTION DEFINITION*****************************************/
 
@@ -36,7 +37,7 @@ bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType,
 {
     bool bRetVal = false;
     
-    printk("Length of payload: %d\n\r", usPayloadLen);
+    // printk("Length of payload: %d\n\r", usPayloadLen);
     if (psPacket && pucPayload)
     {
         psPacket->ucStartByte = START_BYTE;
@@ -115,7 +116,7 @@ void parseWifiCred(const char *pcCmd)
     char cPassword[50] = {};
     sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword);
     sprintf(new_cred, "%s,%s", cSSID, cPassword);
-    printk("Concatenated cred: %s\n", new_cred);
+    //printk("New cred: %s\n", new_cred);
 }
 
 /**
@@ -129,6 +130,16 @@ const char* getNewCred()
     return new_cred;
 }
 
+/**
+ * @brief      : setNewCred
+ * @param [in] : None
+ * @param [out]: None
+ * @return     : None
+*/
+void setNewCred()
+{
+   strcpy(WIFI_SSID_PWD, new_cred);
+}
 
 /**
  * @brief      : Process command
@@ -166,10 +177,11 @@ bool ProcessCmd(char *pcCmd)
         }
         else if(strstr(pcCmd, "ssid") != NULL)
         {
-            printk("Config: %s\n\r", pcCmd);
+            // printk("Config: %s\n\r", pcCmd);
             parseWifiCred(pcCmd);
+            setNewCred();
+            SetDeviceState(DEV_IDLE);
         }
-        printk("Retrieved cred: %s\n", getNewCred());   //getter for the modified wifi cred to be used in wifi module
     }
 }
 

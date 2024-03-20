@@ -49,6 +49,7 @@ bool ProcessResp(char *pcResp);
 bool ProcessPayload(char *pcPayload);
 void parseWifiCred(const char *pcCmd);
 const char* getNewCred();
+void setNewCred();
 #endif
 
 //EOF
