@@ -21,7 +21,7 @@
 #define CFG_NAME 	        "latlong"
 #define RETRY_COUNT         2
 
-char WIFI_SSID_PWD[80] = "Alcodex,Adx@2013";
+char cWifiCredentials[80] = "Alcodex,Adx@2013";
 
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
@@ -47,7 +47,7 @@ _sAtCmdHandle sAtCmdHandle[] = {
     //CMD                                           //Handler       //RespHandler     //argument cnt    //Arguments
     {"AT\n\r",                                      SendCommand,     ProcessResponse,       0,            {NULL}                    },
     {"AT+WFMODE=0\n\r",                             SendCommand,     ProcessResponse,       0,            {NULL}                    },
-    {"AT+WFJAPA=%s\n\r",                            SendCmdWithArgs, ProcessResponse,       1,            {WIFI_SSID_PWD, NULL,NULL}},
+    {"AT+WFJAPA=%s\n\r",                            SendCmdWithArgs, ProcessResponse,       1,            {cWifiCredentials, NULL,NULL}},
     {"AT+AWS=SET APP_PUBTOPIC %s\r\n",              SendCmdWithArgs, ProcessResponse,       1,            {AWS_TOPIC, NULL, NULL}   },
     {"AT+AWS=CFG  0 latshad 1 1\r\n",               SendCommand,     ProcessResponse,       0,            {NULL}                    },
     {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,     ProcessResponse,       0,            {NULL}                    },
@@ -264,11 +264,11 @@ static void CheckAPConnected(const char *pcResp, bool *pbStatus)
  * @brief      : GetAPCredentials
  * @param [in] : None
  * @param [out]: None
- * @return     : WIFI_SSID_PWD
+ * @return     : cWifiCredentials
 */
 char *GetAPCredentials(void)
 {
-    return WIFI_SSID_PWD;
+    return cWifiCredentials;
 }
 
 /**
@@ -279,8 +279,15 @@ char *GetAPCredentials(void)
 */
 void SetAPCredentials(char *pcCredential)
 {
-    memset(WIFI_SSID_PWD, 0, sizeof(WIFI_SSID_PWD));
-    strcpy(WIFI_SSID_PWD, pcCredential);
+    if (pcCredential != NULL)
+    {
+        memset(cWifiCredentials, 0, sizeof(cWifiCredentials));
+        strcpy(cWifiCredentials, pcCredential);
+    }
+    else
+    {
+        printk("Error: pcCredential is NULL");
+    }
 }
 
 /**

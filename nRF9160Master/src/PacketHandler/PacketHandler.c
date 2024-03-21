@@ -113,9 +113,16 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
 {
     char cSSID[20] = {0};
     char cPassword[50] = {0};
-    sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword); //wifi cred format: ssid:<new ssid>,pwd:<new password> //no space after comma
-    sprintf(pcCredential, "%s,%s", cSSID, cPassword);
-    //printk("New WiFi cred: %s\n", pcCredential);
+    if (sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword) == 2)
+    {
+        sprintf(pcCredential, "%s,%s", cSSID, cPassword);
+    }
+    else
+    {
+        printf("Error: Enter ssid and pwd in the format- ssid:<username>,pwd:<password>");  //no space after comma
+        pcCredential[0] = '\0';
+    }
+    //printk("New cred: %s\n", pcCredential);
 }
 
 /**
