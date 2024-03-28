@@ -122,7 +122,7 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
         printf("Error: Enter ssid and pwd in the format- ssid:<username>,pwd:<password>");  //no space after comma
         pcCredential[0] = '\0';
     }
-    //printk("New cred: %s\n", pcCredential);
+    
 }
 
 /**
@@ -162,7 +162,7 @@ bool ProcessCmd(char *pcCmd)
         }
         else if(strstr(pcCmd, "ssid") != NULL)
         {
-            // printk("Config: %s\n\r", pcCmd);
+            printk("Config: %s\n\r", pcCmd);
             parseWifiCred(pcCmd, cBuffer);
             SetAPCredentials(cBuffer);
             DisconnectFromWiFi();

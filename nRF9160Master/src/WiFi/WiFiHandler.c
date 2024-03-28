@@ -13,7 +13,7 @@
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
-//#define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp" //Change this line with SSID and password of choice
+#define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp" //Change this line with SSID and password of choice
 #define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
 #define AWS_THING 		    "test_aws_iot"
 #define AWS_TOPIC 		    "test_aws_iot/testtopic"
@@ -21,7 +21,7 @@
 #define CFG_NAME 	        "latlong"
 #define RETRY_COUNT         2
 
-char cWifiCredentials[80] = "Alcodex,Adx@2013";
+char cWifiCredentials[80] = "Alcodex,Adx@2013"; //SSID and password
 
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
