@@ -6,8 +6,11 @@
 */
 /*******************************************************INCLUDES***************************************************/
 #include "PacketHandler.h"
+#include "../WiFi/WiFiHandler.h"
 #include "../BLE/BleHandler.h"
 #include "../System/SystemHandler.h"
+#include "zephyr/kernel.h"
+#include <sys/_stdint.h>
 
 /*******************************************************MACROS*****************************************************/
 
@@ -33,7 +36,7 @@ bool BuildPacket(_sPacket *psPacket,_ePacketType PcktType,
 {
     bool bRetVal = false;
     
-    printk("Length of payload: %d\n\r", usPayloadLen);
+    // printk("Length of payload: %d\n\r", usPayloadLen);
     if (psPacket && pucPayload)
     {
         psPacket->ucStartByte = START_BYTE;
@@ -101,6 +104,28 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
 }
 
 /**
+ * @brief      : parseWifiCred
+ * @param [in] : pcCmd
+ * @param [out]: pcCredential
+ * @return     : None
+*/
+void parseWifiCred(const char *pcCmd, char *pcCredential)
+{
+    char cSSID[20] = {0};
+    char cPassword[50] = {0};
+    if (sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword) == 2)
+    {
+        sprintf(pcCredential, "%s,%s", cSSID, cPassword);
+    }
+    else
+    {
+        printf("Error: Enter ssid and pwd in the format- ssid:<username>,pwd:<password>");  //no space after comma
+        pcCredential[0] = '\0';
+    }
+    //printk("New cred: %s\n", pcCredential);
+}
+
+/**
  * @brief      : Process command
  * @param [in] : 
  * @param [out]: None
@@ -109,6 +134,7 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
 bool ProcessCmd(char *pcCmd)
 {
     bool bRetVal = false;
+    char cBuffer[80] = {0};
 
     if (pcCmd)
     {
@@ -136,7 +162,11 @@ bool ProcessCmd(char *pcCmd)
         }
         else if(strstr(pcCmd, "ssid") != NULL)
         {
-            printk("Config: %s\n\r", pcCmd);
+            // printk("Config: %s\n\r", pcCmd);
+            parseWifiCred(pcCmd, cBuffer);
+            SetAPCredentials(cBuffer);
+            DisconnectFromWiFi();
+            SetDeviceState(DEV_IDLE);
         }
     }
 }

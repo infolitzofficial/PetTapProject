@@ -27,12 +27,12 @@
 typedef void (*cmdHandler)(const char *pcCmd, char *pcArgs[], int nArgc);
 typedef void (*respHandler)(const char *pcResp, bool *pbStatus);
 
-typedef enum __eUartRxState
+typedef enum __eWiFiUartRxState
 {
-    START,
-    RCV,
-    END
-}_eUartRxState;
+    UART_START,
+    UART_RCV,
+    UART_END
+}_eWiFiUartRxState;
 typedef struct __sAtCmdHandle
 {
     const char *pcCmd;
@@ -51,6 +51,8 @@ void ProcessWiFiMsgs();
 bool SendLocation();
 bool ReadBuff(void);
 bool DisconnectFromWiFi();
+char *GetAPCredentials(void);
+void SetAPCredentials(char *pcCredential);
 #endif
 
 //EOF

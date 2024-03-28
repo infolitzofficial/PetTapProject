@@ -10,9 +10,10 @@
 #include "BleService.h"
 #include "UartHandler.h"
 #include "../System/SystemHandler.h"
+#include "zephyr/sys/printk.h"
 
 /**************************** MACROS********************************************/
-#define VND_MAX_LEN 255
+#define VND_MAX_LEN 246
 
 
 /**************************** GLOBALS*******************************************/
@@ -31,6 +32,10 @@ static bool bNotificationEnabled = false;
 static bool bConnected = false;
 struct bt_conn *psConnHandle = NULL;
 static bool bRcvdData = false;
+
+static void MTUExchangeCb(struct bt_conn *conn, uint8_t att_err,
+    					struct bt_gatt_exchange_params *params);
+static void InitiateMTUExcahnge(struct bt_conn *conn);
 
 /****************************FUNCTION DEFINITION********************************/
 
@@ -72,12 +77,50 @@ static ssize_t CharaWrite(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	}
 
 	memcpy(value + offset, buf, len);
+	memset(ucWriteBuf, 0, sizeof(ucWriteBuf));
 	memcpy(ucWriteBuf, value, len);
-	SetDeviceState(BLE_CONFIG);
+	printk("\n\nInside charawrite- %s\n", ucWriteBuf);
 	bRcvdData = true;
-
+	SetDeviceState(BLE_CONFIG);
 	return len;
 }
+
+/**
+ * @brief 	   : Notification callback
+ * @param [in] : attr - pointer to GATT attributes
+ * @param [in] : value - Client Characteristic Configuration Values
+ * @return 	   : None
+*/
+void BleSensorDataNotify(const struct bt_gatt_attr *attr, uint16_t value)
+{
+
+    if (value == BT_GATT_CCC_NOTIFY)
+    {
+        bNotificationEnabled = true;
+    }
+    else
+    {
+        bNotificationEnabled = false;
+    }
+}
+
+/* PETTAP SERVICE DEFINITION*/
+/**
+ * @note Service registration and chara adding.
+ * @paragraph Below service has one chara with a notify permission.
+*/
+BT_GATT_SERVICE_DEFINE(PetTapService,
+    BT_GATT_PRIMARY_SERVICE(&sServiceUUID),
+    BT_GATT_CHARACTERISTIC(&sUartReadChara.uuid,			//location chara
+                BT_GATT_CHRC_NOTIFY,
+                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+                CharaRead, CharaWrite, ucSensorData),
+    BT_GATT_CCC(BleSensorDataNotify, (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE)),
+	BT_GATT_CHARACTERISTIC(&sUartResponseChara.uuid,			//read ssid pwd
+				BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
+					BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+					CharaRead,CharaWrite,ucSensorData)
+);
 
 /**
  * @brief MTU exchange callback
@@ -120,44 +163,6 @@ static void InitiateMTUExcahnge(struct bt_conn *conn)
         printk("\n\rMTU exchange pending ...\n\r");
     }
 }
-
-/**
- * @brief 	   : Notification callback
- * @param [in] : attr - pointer to GATT attributes
- * @param [in] : value - Client Characteristic Configuration Values
- * @return 	   : None
-*/
-void BleSensorDataNotify(const struct bt_gatt_attr *attr, uint16_t value)
-{
-
-    if (value == BT_GATT_CCC_NOTIFY)
-    {
-        bNotificationEnabled = true;
-    }
-    else
-    {
-        bNotificationEnabled = false;
-    }
-}
-
-/* PETTAP SERVICE DEFINITION*/
-/**
- * @note Service registration and chara adding.
- * @paragraph Below service has one chara with a notify permission.
-*/
-BT_GATT_SERVICE_DEFINE(PetTapService,
-    BT_GATT_PRIMARY_SERVICE(&sServiceUUID),
-    BT_GATT_CHARACTERISTIC(&sUartReadChara.uuid,
-                BT_GATT_CHRC_NOTIFY,
-                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
-                CharaRead, CharaWrite, ucSensorData),
-    BT_GATT_CCC(BleSensorDataNotify, (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE)),
-	BT_GATT_CHARACTERISTIC(&sUartResponseChara.uuid,
-				BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
-					BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
-					CharaRead,CharaWrite,ucSensorData)
-);
-
 /**
  * @brief 	   : Connection callback
  * @param [in] : err - Error code
@@ -170,6 +175,8 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	printk("Connected\n");
 	InitiateMTUExcahnge(conn);
 }
+
+
 
 /**
  * @brief 	   : Disconnection callback
@@ -244,6 +251,7 @@ void GetRcvdData(uint8_t *pucData)
 	{
 		memcpy(pucData, ucWriteBuf, sizeof(ucWriteBuf));
 	}
+	printk("\ngetrcvd call bk- %s \n", ucWriteBuf);
 }
 
 /**

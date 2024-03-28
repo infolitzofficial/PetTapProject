@@ -112,6 +112,7 @@ bool ProcessRcvdPacket(_sPacket *psPacket)
 */
 bool ProcessCmd(char *pcCmd)
 {
+    printk("\n 528ProcessCmd\n");
     bool bRetVal = false;
 
     if (pcCmd)
@@ -121,6 +122,9 @@ bool ProcessCmd(char *pcCmd)
 #ifdef nRF52840            
             SetDeviceState(BLE_CONN_REQ);
 #endif
+        }
+        else {
+            printk("/n In here: %s\n", pcCmd);
         }
     }
 }
@@ -134,7 +138,7 @@ bool ProcessCmd(char *pcCmd)
 bool ProcessResponse(char *pcResp)
 {
     bool bRetVal = false;
-
+    printk("\n 528ProcessResp\n");
     if (pcResp)
     {
         if (strcmp(pcResp, "ACK") == 0)
