@@ -21,13 +21,15 @@
 #define CFG_NAME 	        "latlong"
 #define RETRY_COUNT         2
 
+char cWifiCredentials[80] = "Alcodex,Adx@2013"; //SSID and password
+
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 bool bResponse = false;         //For check response received for AT command
 /*Buffer for UART receive data*/
 static uint8_t cRxBuffer[MSG_SIZE] = {0};
 /*State of UART receive*/
-static _eUartRxState eUartRxState = START;
+static _eWiFiUartRxState eWiFiUartRxState = UART_START;
 /*Index of Receiving buffer*/
 static uint16_t usRxBufferIdx = 0;
 /*Flag for packet receive completion*/
@@ -45,7 +47,7 @@ _sAtCmdHandle sAtCmdHandle[] = {
     //CMD                                           //Handler       //RespHandler     //argument cnt    //Arguments
     {"AT\n\r",                                      SendCommand,     ProcessResponse,       0,            {NULL}                    },
     {"AT+WFMODE=0\n\r",                             SendCommand,     ProcessResponse,       0,            {NULL}                    },
-    {"AT+WFJAPA=%s\n\r",                            SendCmdWithArgs, ProcessResponse,       1,            {WIFI_SSID_PWD, NULL,NULL}},
+    {"AT+WFJAPA=%s\n\r",                            SendCmdWithArgs, ProcessResponse,       1,            {cWifiCredentials, NULL,NULL}},
     {"AT+AWS=SET APP_PUBTOPIC %s\r\n",              SendCmdWithArgs, ProcessResponse,       1,            {AWS_TOPIC, NULL, NULL}   },
     {"AT+AWS=CFG  0 latshad 1 1\r\n",               SendCommand,     ProcessResponse,       0,            {NULL}                    },
     {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,     ProcessResponse,       0,            {NULL}                    },
@@ -66,29 +68,29 @@ bool ReadBuff(void)
  
     if (uart_fifo_read(uart_dev, &ucByte, 1) == 1)
     {
-        switch(eUartRxState)
+        switch(eWiFiUartRxState)
         {
-            case START: if (ucByte != '\n' && ucByte != '\r')
+            case UART_START: if (ucByte != '\n' && ucByte != '\r')
                         {
                             usRxBufferIdx = 0;
                             memset(cRxBuffer, 0, sizeof(cRxBuffer));
                             cRxBuffer[usRxBufferIdx++] = ucByte;
-                            eUartRxState = RCV;
+                            eWiFiUartRxState = UART_RCV;
                         }
                         break;
  
-            case RCV:   if (ucByte == '\n')
+            case UART_RCV:   if (ucByte == '\n')
                         {
                            
                             cRxBuffer[usRxBufferIdx++] = '\0';
                             bRxCmplt = true;
-                            eUartRxState = START;
+                            eWiFiUartRxState = UART_START;
                             k_msgq_put(&UartMsgQueue, &cRxBuffer, K_NO_WAIT);
                         }
                         cRxBuffer[usRxBufferIdx++] = ucByte;
                         break;
  
-            case END:   eUartRxState = START;
+            case UART_END:   eWiFiUartRxState = UART_START;
                         usRxBufferIdx = 0;
                         break;
  
@@ -256,6 +258,36 @@ static void CheckAPConnected(const char *pcResp, bool *pbStatus)
     {
         *pbStatus = false;
     } 
+}
+
+/**
+ * @brief      : GetAPCredentials
+ * @param [in] : None
+ * @param [out]: None
+ * @return     : cWifiCredentials
+*/
+char *GetAPCredentials(void)
+{
+    return cWifiCredentials;
+}
+
+/**
+ * @brief      : SetAPCredentials
+ * @param [in] : pcCredential
+ * @param [out]: None
+ * @return     : None
+*/
+void SetAPCredentials(char *pcCredential)
+{
+    if (pcCredential != NULL)
+    {
+        memset(cWifiCredentials, 0, sizeof(cWifiCredentials));
+        strcpy(cWifiCredentials, pcCredential);
+    }
+    else
+    {
+        printk("Error: pcCredential is NULL");
+    }
 }
 
 /**
@@ -486,7 +518,7 @@ bool SendLocation()
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f,%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+        sprintf(cPayload,"%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
         printk("sending data: %s\n\r", cPayload);
         sprintf(cATcmd, "AT+AWS=CMD MCU_DATA %d %s %s\r\n", CFG_NUM, CFG_NAME, cPayload);
         print_uart(cATcmd);

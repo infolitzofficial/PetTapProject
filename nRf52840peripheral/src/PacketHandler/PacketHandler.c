@@ -122,6 +122,9 @@ bool ProcessCmd(char *pcCmd)
             SetDeviceState(BLE_CONN_REQ);
 #endif
         }
+        else {
+            printk("/n In here: %s\n", pcCmd);
+        }
     }
 }
 
@@ -134,7 +137,6 @@ bool ProcessCmd(char *pcCmd)
 bool ProcessResponse(char *pcResp)
 {
     bool bRetVal = false;
-
     if (pcResp)
     {
         if (strcmp(pcResp, "ACK") == 0)
