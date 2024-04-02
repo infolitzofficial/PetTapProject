@@ -1,8 +1,8 @@
 /**
- * @file   : NFC.c
- * @author : Devendu
+ * @file   : Nfc.c
+ * @author : divin raj
  * @brief  : File containing NFC functionalities
- * @date   : 22-03-2024
+ * @date   : 02-04-2024
  *
 */
  
@@ -65,7 +65,7 @@ static void nfc_callback(void *context,
  *
  * @return 0 if successful, otherwise a negative error code.
  */
-int nfc_Setup(void)
+int NFCSetup(void)
 {
     size_t len = sizeof(ndef_Msg_Buf);
 
@@ -76,7 +76,7 @@ int nfc_Setup(void)
         return err;
     }
 
-    if (nfc_Encode_Launch_App_Msg(webpage_url,
+    if (NFCEncodeLaunchAppMsg(webpage_url,
                                    sizeof(webpage_url),
                                    ndef_Msg_Buf,
                                    &len)) 
@@ -84,12 +84,12 @@ int nfc_Setup(void)
         return err;
     }
 
-    if(nfc_Set_Payload(ndef_Msg_Buf, len))
+    if(NFCSetPayload(ndef_Msg_Buf, len))
     {
         return err;
     }
 
-    if(nfc_Start_Emulation())
+    if(NFCStartEmulation())
     {
         return err;
     }
@@ -110,7 +110,7 @@ int nfc_Setup(void)
  *
  * @return 0 if successful, otherwise an error code.
  */
-int nfc_Encode_Launch_App_Msg(const uint8_t *url, size_t url_len, uint8_t *ndef_msg_buf, size_t *ndef_msg_len)
+int NFCEncodeLaunchAppMsg(const uint8_t *url, size_t url_len, uint8_t *ndef_msg_buf, size_t *ndef_msg_len)
 {
     int err = nfc_launchapp_msg_encode(NULL, 0, url, url_len, ndef_msg_buf, ndef_msg_len);
     return err;
@@ -127,7 +127,7 @@ int nfc_Encode_Launch_App_Msg(const uint8_t *url, size_t url_len, uint8_t *ndef_
  *
  * @return 0 if successful, otherwise an error code.
  */
-int nfc_Set_Payload(uint8_t *ndef_msg_buf, size_t ndef_msg_len)
+int NFCSetPayload(uint8_t *ndef_msg_buf, size_t ndef_msg_len)
 {
     int err = nfc_t2t_payload_set(ndef_msg_buf, ndef_msg_len);
     return err;
@@ -140,7 +140,7 @@ int nfc_Set_Payload(uint8_t *ndef_msg_buf, size_t ndef_msg_len)
  *
  * @return 0 if successful, otherwise an error code.
  */
-int nfc_Start_Emulation(void)
+int NFCStartEmulation(void)
 {
     int err = nfc_t2t_emulation_start();
     return err;

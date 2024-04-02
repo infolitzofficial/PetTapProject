@@ -57,7 +57,7 @@ int main(void)
 
     StartAdvertising();
 
-    nfc_Setup();
+    NFCSetup();
 
 
     while(1)
