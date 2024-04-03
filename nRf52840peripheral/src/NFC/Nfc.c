@@ -18,12 +18,16 @@
 #define NFC_FIELD_LED       DK_LED1
  
 /************************************GLOBALS**************************/
-/* URL: https://instagram.com */
+/* URL: anand-infolitz.github.io */
+/**
+ *@brief This URL is used to launch application
+ */
+
 static const uint8_t webpage_url[] ={
      'h', 't', 't', 'p', ':', '/', '/', 'a', 'n', 'a', 'n', 'd', '-', 'i', 'n','f', 'o', 'l', 'i','t','z','.','g','i','t','h','u','b','.','i','o'
 };
 
- 
+
 static uint8_t ndef_Msg_Buf[NDEF_MSG_BUF_SIZE];
  
 /**********************************FUNCTION DEFINITIONS****************/
