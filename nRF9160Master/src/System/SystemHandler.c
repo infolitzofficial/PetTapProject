@@ -179,7 +179,7 @@ _eDevState *GetDeviceState()
 
 /**
  * @brief       : Set current device state
- * @param [in]  : DeviceState - DeviceState
+ * @param [in]  : DeviceState
  * @param [out] : none
  * @return      : Current device state
 */

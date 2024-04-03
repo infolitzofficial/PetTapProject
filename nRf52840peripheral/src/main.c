@@ -26,6 +26,7 @@
 #include "UartHandler.h"
 #include "PacketHandler/PacketHandler.h"
 #include "System/SystemHandler.h"
+#include "Nfc.h"
 
 
 /*******************************MACROS****************************************/
@@ -55,6 +56,9 @@ int main(void)
     }
 
     StartAdvertising();
+
+    NFCSetup();
+
 
     while(1)
     {

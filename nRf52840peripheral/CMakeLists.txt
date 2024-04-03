@@ -16,9 +16,11 @@ target_sources(app PRIVATE src/main.c
                            src/UartHandler/UartHandler.c
                            src/PacketHandler/PacketHandler.c
                            src/System/SystemHandler.c
+                           src/NFC/Nfc.c
                            "C:/ncs/v2.4.2/modules/hal/nordic/nrfx/samples/src/nrfx_saadc/common/saadc_examples_common.c")
 target_include_directories(app PRIVATE src/BLE
                                        src/UartHandler
                                        src/PacketHandler
                                        src/System
+                                       src/NFC
                                        ${COMMON_PATH} "C:/ncs/v2.4.2/modules/hal/nordic/nrfx/samples/src/nrfx_saadc/common")
