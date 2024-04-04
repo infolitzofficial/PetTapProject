@@ -16,7 +16,7 @@
 
 /***************************************MACROS********************************************/
 /*Uncomment the below macro for enable Flash storage functionality*/
-#define NVS_ENABLE 
+//#define NVS_ENABLE 
 /*****************************************************************************************/
 #ifdef  NVS_ENABLE
 
