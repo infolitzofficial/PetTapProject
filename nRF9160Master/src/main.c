@@ -30,6 +30,8 @@
 #include <cJSON_os.h>
 #include <zephyr/logging/log.h>
 
+#include "NVS/NvsHandler.h"
+
 #define STACKSIZE 			2048
 #define THREAD0_PRIORITY 	7
 #define THREAD1_PRIORITY 	7
@@ -1229,11 +1231,30 @@ handle_nmea:
 */
 static void SystemTask()
 {
+	char buf[50] = "abdcefg";
+	char ucReadBuffer[50] = {0};
+	int nRetVal = 0;
+#ifdef NVS_ENABLE
+	nRetVal = NvsInit();
+	if (nRetVal != 0)
+	{
+		
+	}
+#endif
 	while (1)
 	{
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
 		k_msleep(10);
+#ifdef NVS_ENABLE
+		nRetVal = NvsWrite(buf, sizeof(buf), CONFIG_IDX);
+		k_msleep(100);
+		nRetVal = NvsRead(buf, sizeof(buf), CONFIG_IDX);
+
+		printk("DEBUG : Read Buffer %s\n", buf);
+		k_msleep(100);
+#endif
+
 	}
 }

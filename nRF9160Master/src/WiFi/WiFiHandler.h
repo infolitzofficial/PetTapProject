@@ -11,6 +11,7 @@
 #define _WIFI_HANDLER_H
 
 /*********************************************INCLUDES***************************************************/
+
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
@@ -41,6 +42,12 @@ typedef struct __sAtCmdHandle
     int  nArgsCount;
     char *pcArgs[ARGS_CNT];
 }_sAtCmdHandle;
+
+typedef struct __attribute__((__packed__)) __sWifiCred
+{
+    uint8_t ucSsid[20];
+    uint8_t ucPwd[20];
+}_sWifiCred;
 
 /***********************************************FUNCTION DECLARATIONS**************************************/
 bool InitUart(void);
