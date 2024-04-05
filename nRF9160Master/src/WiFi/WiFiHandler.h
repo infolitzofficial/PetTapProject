@@ -54,12 +54,13 @@ bool InitUart(void);
 void ProcessResponse(const char *pcResp, bool *pbStatus);
 bool ConfigureWiFi();
 bool IsWiFiConnected();
-void ProcessWiFiMsgs();
+bool ProcessWiFiMsgs();
 bool SendLocation();
 bool ReadBuff(void);
 bool DisconnectFromWiFi();
 char *GetAPCredentials(void);
 void SetAPCredentials(char *pcCredential);
+_sAtCmdHandle *GetATCmdHandle();
 #endif
 
 //EOF

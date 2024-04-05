@@ -13,11 +13,11 @@
 static struct nvs_fs sNvsFileSystem = {0};
 
 static _sConfigData sConfigData[5] = {
-    {{"Alcodex", "Adx@2013"}, false},
-    {{0, 0}, false},
-    {{0, 0}, false},
-    {{0, 0}, false},
-    {{0, 0}, false},
+    {{"Alcodex", "Adx@2013"}, false, true},
+    {{0, 0}, false, false},
+    {{0, 0}, false, false},
+    {{0, 0}, false, false},
+    {{0, 0}, false, false},
 };
 
 
@@ -82,18 +82,17 @@ int NvsWrite(uint8_t *puBuf, uint16_t usBufLen, uint16_t usIdx)
 {
     int nretVal = 0;
 
-    nretVal = nvs_write(&sNvsFileSystem,usIdx,puBuf,usBufLen);
+    nretVal = nvs_write(&sNvsFileSystem,CONFIG_IDX,puBuf,usBufLen);
+
+    printk("DEBUG: Write Buffer Length %d\n",nretVal);
     
     if (nretVal < 0)
     {
         printk("ERROR:nvs_write failed");
-        return nretVal;
     
     }
-    else 
-    {
-        return nretVal;
-    }
+
+    return nretVal;
 }
 
 int NvsDelete (uint16_t usIdx)
@@ -111,7 +110,7 @@ int NvsDelete (uint16_t usIdx)
 
 _sConfigData *GetConfigData()
 {
-    return &sConfigData;
+    return sConfigData;
 }
 
 #endif

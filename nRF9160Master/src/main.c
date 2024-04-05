@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +32,7 @@
 #include <zephyr/logging/log.h>
 
 #include "NVS/NvsHandler.h"
+#include "zephyr/sys/printk.h"
 
 #define STACKSIZE 			2048
 #define THREAD0_PRIORITY 	7
@@ -1222,6 +1224,51 @@ handle_nmea:
 		k_msleep(10);
 	}
 } 
+static bool CheckForConfig()
+{
+	int nRetVal = 0;
+	bool bRet = false;
+    uint8_t uReadBuf[255] = {0};
+    uint8_t uCredentialIdx = 0;
+
+#ifdef NVS_ENABLE
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+
+	
+
+	nRetVal = NvsRead(uReadBuf, (sizeof(_sConfigData) * 5 ), CONFIG_IDX); 
+
+	if (nRetVal == sizeof(_sConfigData) * 5)
+	{
+		memcpy(psConfigData, (_sConfigData *)uReadBuf, sizeof(_sConfigData) * 5);
+		for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+		{
+			if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+			{
+				printk("DEBUG : Wifi SSID : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucSsid);
+				printk("DEBUG : Wifi Pwd : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucPwd);
+				printk("DEBUG : Wifi Last Connected status : %d\n", psConfigData[uCredentialIdx].bWifiStatus);
+
+				memset(uReadBuf, 0, sizeof(uReadBuf));
+				sprintf(uReadBuf, "%s,%s", psConfigData[uCredentialIdx].sWifiCred.ucSsid, psConfigData[uCredentialIdx].sWifiCred.ucPwd);
+				SetAPCredentials(uReadBuf);
+			}
+			else 
+			{
+				continue;
+			}
+		}   
+		bRet = true;
+	
+    
+	}
+   
+#endif
+
+    return bRet;
+}
 
 /**
  * @brief 	   : System Handler Task
@@ -1231,30 +1278,39 @@ handle_nmea:
 */
 static void SystemTask()
 {
-	char buf[50] = "abdcefg";
-	char ucReadBuffer[50] = {0};
+
 	int nRetVal = 0;
 #ifdef NVS_ENABLE
 	nRetVal = NvsInit();
+
 	if (nRetVal != 0)
 	{
 		
 	}
+	if (CheckForConfig())
+	{
+		printk("DEBUG : Config successfully");
+
+	}
+	else
+	{
+		printk("ERROR : Failed to configure");
+	}
 #endif
 	while (1)
-	{
+	{   
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
 		k_msleep(10);
-#ifdef NVS_ENABLE
-		nRetVal = NvsWrite(buf, sizeof(buf), CONFIG_IDX);
-		k_msleep(100);
-		nRetVal = NvsRead(buf, sizeof(buf), CONFIG_IDX);
+// #ifdef NVS_ENABLE
+// 		nRetVal = NvsWrite(buf, sizeof(buf), CONFIG_IDX);
+// 		k_msleep(100);
+// 		nRetVal = NvsRead(buf, sizeof(buf), CONFIG_IDX);
 
-		printk("DEBUG : Read Buffer %s\n", buf);
-		k_msleep(100);
-#endif
+// 		printk("DEBUG : Read Buffer %s\n", buf);
+// 		k_msleep(100);
+// #endif
 
 	}
 }

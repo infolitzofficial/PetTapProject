@@ -16,7 +16,7 @@
 
 /***************************************MACROS********************************************/
 /*Uncomment the below macro for enable Flash storage functionality*/
-//#define NVS_ENABLE 
+#define NVS_ENABLE 
 /*****************************************************************************************/
 #ifdef  NVS_ENABLE
 
@@ -35,6 +35,7 @@ typedef struct __attribute__((packed)) __sConfigData
 {
     _sWifiCred sWifiCred;
     bool bWifiStatus;
+    bool bCredAddStatus;
 }_sConfigData;
 
 

@@ -10,7 +10,13 @@
 #include "../BLE/BleHandler.h"
 #include "../System/SystemHandler.h"
 #include "zephyr/kernel.h"
+#include "zephyr/sys/printk.h"
+#include <ssp/string.h>
+#include <string.h>
 #include <sys/_stdint.h>
+
+#include "../NVS/NvsHandler.h"
+
 
 /*******************************************************MACROS*****************************************************/
 
@@ -113,9 +119,37 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
 {
     char cSSID[20] = {0};
     char cPassword[50] = {0};
+#ifdef NVS_ENABLE
+    int8_t uCredentialIdx = 0;
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+#endif
+
     if (sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword) == 2)
     {
         sprintf(pcCredential, "%s,%s", cSSID, cPassword);
+
+#ifdef NVS_ENABLE
+        for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+        {
+
+            if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+            {
+                continue;
+            }
+            else 
+            {
+                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSSID, strlen(cSSID));
+                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPassword, strlen(cPassword));
+                psConfigData[uCredentialIdx].bWifiStatus = false;
+                psConfigData[uCredentialIdx].bCredAddStatus = true;
+                break;
+            }
+
+        }
+#endif
+
     }
     else
     {
@@ -135,6 +169,12 @@ bool ProcessCmd(char *pcCmd)
 {
     bool bRetVal = false;
     char cBuffer[80] = {0};
+    _sAtCmdHandle *psAtCmdHndler = NULL;
+
+    psAtCmdHndler = GetATCmdHandle();
+
+
+    
 
     if (pcCmd)
     {
@@ -164,9 +204,14 @@ bool ProcessCmd(char *pcCmd)
         {
             printk("Config: %s\n\r", pcCmd);
             parseWifiCred(pcCmd, cBuffer);
+            WriteCredToFlash();
             SetAPCredentials(cBuffer);
             DisconnectFromWiFi();
-            SetDeviceState(DEV_IDLE);
+            printk("Config: %s\n\r", cBuffer);
+            psAtCmdHndler[2].CmdHdlr(psAtCmdHndler[2].pcCmd, psAtCmdHndler[2].pcArgs, psAtCmdHndler[2].nArgsCount);    
+            k_msleep(100);
+            //bRetVal = ProcessWiFiMsgs_NVS();
+            //SetDeviceState(DEV_IDLE);
         }
     }
 }
@@ -238,6 +283,51 @@ bool ProcessPayload(char *pcPayload)
     }
 
     return bRetVal;
+}
+
+int WriteCredToFlash()
+{
+    int nRetVal = 0;
+    uint8_t uReadBuf[255] = {0};
+    uint8_t uCredentialIdx = 0;
+
+#ifdef NVS_ENABLE
+    _sConfigData sConfigData[5] = {0};
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+    // memcpy(&sConfigData, psConfigData, sizeof(_sConfigData));
+    memcpy(sConfigData, psConfigData, sizeof(_sConfigData) * 5);
+    printk("DEBUG : Config Data SSID %s\n", sConfigData[1].sWifiCred.ucSsid);
+    nRetVal = NvsWrite((uint8_t *)sConfigData, sizeof(_sConfigData) * 5, CONFIG_IDX);
+
+    if (nRetVal == (sizeof(_sConfigData) * 5)) 
+    {
+        printk("DEBUG : Config Data Updated Successfully\n\r");
+
+        nRetVal = NvsRead(uReadBuf, sizeof(_sConfigData) * 5 , CONFIG_IDX); 
+        memcpy(psConfigData, (_sConfigData *)uReadBuf, sizeof(_sConfigData) * 5);
+        for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+        {
+            if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+            {
+                printk("DEBUG : Wifi SSID : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucSsid);
+                printk("DEBUG : Wifi Pwd : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucPwd);
+                printk("DEBUG : Wifi Last Connected status : %d\n", psConfigData[uCredentialIdx].bWifiStatus);
+            }
+            else 
+            {
+                continue;
+            }
+        }       
+    }
+    else 
+    {
+        printk("DEBUG : Failed to write credentials to device with Return value: %d\n", nRetVal);
+    }
+#endif
+
+    return nRetVal;
 }
 
 //EOF

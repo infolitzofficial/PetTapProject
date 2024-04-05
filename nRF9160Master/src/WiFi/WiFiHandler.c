@@ -23,6 +23,8 @@
 
 char cWifiCredentials[80] = "Alcodex,Adx@2013"; //SSID and password
 
+
+
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 bool bResponse = false;         //For check response received for AT command
@@ -53,6 +55,8 @@ _sAtCmdHandle sAtCmdHandle[] = {
     {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,     ProcessResponse,       0,            {NULL}                    },
     {"AT+AWS=CFG %d %s 1 0\r\n",                    SendCmdWithArgs, ProcessResponse,       2,            {CFG_NUM, CFG_NAME, NULL} },
 };  
+
+
 
 
 /******************************************FUNCTION DEFINITIONS******************************************/  
@@ -296,22 +300,22 @@ void SetAPCredentials(char *pcCredential)
  * @param [out] : None 
  * @return      : None
 */
-void ProcessWiFiMsgs()
+bool ProcessWiFiMsgs( )
 {
     char cRxBuffer[255];
-
     _eDevState *DevState = NULL;
     bool bStatus = false;
 
     DevState = GetDeviceState();
-
     if (0 == k_msgq_get(&UartMsgQueue, cRxBuffer, K_MSEC(100)))
     {
+        printk("DEBUG: DA RESPONSE%s\n", cRxBuffer);
         CheckAPConnected(cRxBuffer, &bStatus);
-
         if (bStatus)
         {
-            SetDeviceState(WIFI_CONNECTED);
+            SetDeviceState(WIFI_CONNECTED); 
+            printk("DEBUG: Device connected to %s\n", cRxBuffer);
+            return bStatus;        
         }
         
         CheckAPDisconnected(cRxBuffer, &bStatus);
@@ -319,8 +323,11 @@ void ProcessWiFiMsgs()
         if (bStatus)
         {
             SetDeviceState(WIFI_DISCONNECTED);
+            printk("DEBUG: Device disconnected connected to %s\n", cRxBuffer);
+            return bStatus;
         }
     }
+
 }
 
 /**
@@ -452,7 +459,7 @@ bool DisconnectFromWiFi()
     print_uart(cCmdBuff);
 
     k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(100));
-    printk("Response: %s\n\r", cCmdBuff);
+    printk("Disconnect Cmd Response: %s\n\r", cCmdBuff);
     ProcessResponse(cCmdBuff, &bResponse);
 
     if (bResponse)
@@ -527,6 +534,12 @@ bool SendLocation()
     }
 
     return bRetVal;
+}
+
+
+_sAtCmdHandle *GetATCmdHandle()
+{   
+    return &sAtCmdHandle;
 }
 
 //EOF
