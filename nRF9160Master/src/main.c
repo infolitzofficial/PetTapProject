@@ -1254,6 +1254,7 @@ static bool CheckForConfig()
 				memset(uReadBuf, 0, sizeof(uReadBuf));
 				sprintf(uReadBuf, "%s,%s", psConfigData[uCredentialIdx].sWifiCred.ucSsid, psConfigData[uCredentialIdx].sWifiCred.ucPwd);
 				SetAPCredentials(uReadBuf);
+				printk("DEBUG : Read string from flash %s\n", uReadBuf);
 			}
 			else 
 			{

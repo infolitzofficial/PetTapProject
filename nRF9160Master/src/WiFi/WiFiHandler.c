@@ -10,6 +10,7 @@
 #include "WiFiHandler.h"
 #include "../System/SystemHandler.h"
 #include <string.h>
+#include "../NVS/NvsHandler.h"
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
@@ -36,6 +37,8 @@ static _eWiFiUartRxState eWiFiUartRxState = UART_START;
 static uint16_t usRxBufferIdx = 0;
 /*Flag for packet receive completion*/
 static bool bRxCmplt = false;
+static char cSsid[20] = {0};
+static char cPwd[20] = {0};
 
 K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
@@ -254,9 +257,43 @@ static void CheckAPDisconnected(const char *pcResp, bool *pbStatus)
 */
 static void CheckAPConnected(const char *pcResp, bool *pbStatus)
 {
+    #ifdef NVS_ENABLE
+    int8_t uCredentialIdx = 0;
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+#endif
     if (strstr(pcResp, "+WFJAP:1") != NULL)
     {
         *pbStatus = true;
+        if (strstr(pcResp, cSsid) != NULL) 
+        {
+#ifdef NVS_ENABLE
+        for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+        {
+
+            if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+            {
+                continue;
+            }
+            else 
+            {
+                if (strstr(pcResp, cSsid) != NULL) 
+                {
+                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSsid, strlen(cSsid));
+                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPwd, strlen(cPwd));
+                psConfigData[uCredentialIdx].bWifiStatus = false;
+                psConfigData[uCredentialIdx].bCredAddStatus = true;
+                }
+                
+                break;
+            }
+
+        }
+        WriteCredToFlash();
+
+#endif       
+        }
     }
     else
     {
@@ -356,9 +393,11 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
 */
 static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus)
 {
+
     if (strstr(pcResp, "+WFSTA:1") != NULL)
     {
         *pbStatus = true;
+
     }
     else
     {
@@ -540,6 +579,13 @@ bool SendLocation()
 _sAtCmdHandle *GetATCmdHandle()
 {   
     return &sAtCmdHandle;
+}
+
+
+void SetWifiCred(char *pcSsid, char *pcPwd)
+{
+    strcpy(cSsid, pcSsid);
+    strcpy(cPwd, pcPwd);
 }
 
 //EOF

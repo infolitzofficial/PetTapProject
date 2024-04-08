@@ -43,7 +43,8 @@ typedef struct __attribute__((packed)) __sConfigData
 /***************************************FUNCTION DECLARATION********************************/
 
 int NvsInit();
-int NvsRead(uint8_t *puBuf, uint16_t usBufLen, uint16_t usIdx); int NvsWrite(uint8_t *puBuf, uint16_t usBufLen, uint16_t usIdx);
+int NvsRead(uint8_t *puBuf, uint16_t usBufLen, uint16_t usIdx); 
+int NvsWrite(uint8_t *puBuf, uint16_t usBufLen, uint16_t usIdx);
 int NvsDelete(uint16_t usIdx);
 _sConfigData *GetConfigData();
 

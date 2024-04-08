@@ -61,6 +61,7 @@ bool DisconnectFromWiFi();
 char *GetAPCredentials(void);
 void SetAPCredentials(char *pcCredential);
 _sAtCmdHandle *GetATCmdHandle();
+void SetWifiCred(char *pcSsid, char *pcPwd);
 #endif
 
 //EOF

@@ -129,6 +129,7 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
     if (sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword) == 2)
     {
         sprintf(pcCredential, "%s,%s", cSSID, cPassword);
+        SetWifiCred(cSSID, cPassword);
 
 #ifdef NVS_ENABLE
         for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
@@ -140,10 +141,10 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
             }
             else 
             {
-                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSSID, strlen(cSSID));
-                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPassword, strlen(cPassword));
-                psConfigData[uCredentialIdx].bWifiStatus = false;
-                psConfigData[uCredentialIdx].bCredAddStatus = true;
+                // memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSSID, strlen(cSSID));
+                // memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPassword, strlen(cPassword));
+                // psConfigData[uCredentialIdx].bWifiStatus = false;
+                // psConfigData[uCredentialIdx].bCredAddStatus = true;
                 break;
             }
 
@@ -204,7 +205,7 @@ bool ProcessCmd(char *pcCmd)
         {
             printk("Config: %s\n\r", pcCmd);
             parseWifiCred(pcCmd, cBuffer);
-            WriteCredToFlash();
+            // WriteCredToFlash();
             SetAPCredentials(cBuffer);
             DisconnectFromWiFi();
             printk("Config: %s\n\r", cBuffer);
