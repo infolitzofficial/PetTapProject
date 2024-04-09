@@ -32,6 +32,7 @@
 #include <zephyr/logging/log.h>
 
 #include "NVS/NvsHandler.h"
+#include "Temp_MCP/TempAdcHandler.h"
 #include "zephyr/sys/printk.h"
 
 #define STACKSIZE 			2048
@@ -1024,6 +1025,7 @@ int main(void)
 	cJSON_Init();
 	InitUart();
 	InitBleUart();
+	initialize_saadc();
 
 	LOG_INF("Starting GNSS AWS sample");
 
@@ -1300,6 +1302,7 @@ static void SystemTask()
 #endif
 	while (1)
 	{   
+		calculate_Temperature(); //called to get the temperature 
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
