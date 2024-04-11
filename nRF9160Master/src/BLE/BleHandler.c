@@ -210,23 +210,26 @@ bool ReadPacket(uint8_t *pucBuffer)
 }
 
 /**
- * @brief       : Send location data to BLE
+ * @brief       : Send payload to BLE
  * @param [in]  : None
  * @param [out] : None
  * @return      : true for success
 */
-bool SendLocationToBle()
+bool SendPayloadToBle()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
     char cPayload[PAYLOAD_SIZE];
+    float fTemperatureValue = 0.0f; // Initialize to 0 in case of failure
     _sPacket sPacket = {0};
 
     psLocationData = GetLocationData();
+    CalculateTemperature(&fTemperatureValue);
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f,%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+        sprintf(cPayload, "%.6f/%.6f/Temp:%.2f°C", psLocationData->dLatitude, psLocationData->dLongitude, fTemperatureValue);
+       // sprintf(cPayload, "%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
         printk("sending data: %s\n\r", cPayload);
         BuildPacket(&sPacket, RESP, (uint8_t *)cPayload, strlen(cPayload));
         SendBleMsg(&sPacket, sizeof(_sPacket));

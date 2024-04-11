@@ -194,7 +194,7 @@ bool ProcessCmd(char *pcCmd)
         {
             if (IsLocationDataOK())
             {
-                SendLocationToBle();
+                SendPayloadToBle();
             }
             else
             {

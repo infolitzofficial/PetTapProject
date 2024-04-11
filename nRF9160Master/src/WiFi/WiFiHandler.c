@@ -294,7 +294,7 @@ static void CheckAPConnected(const char *pcResp, bool *pbStatus)
 
 #endif       
         }
-    }
+    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
     else
     {
         *pbStatus = false;
@@ -548,23 +548,27 @@ static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc)
 }
 
 /**
- * @brief       : function for sending location data over WiFi
+ * @brief       : function for sending payload data over WiFi
  * @param [in]  : None
  * @param [out] : None
  * @return      : true for success
 */
-bool SendLocation()
+bool SendPayload()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
     char cPayload[50]; //Location data buffer
-    char cATcmd[100]; //AT command buffer 
+    char cATcmd[100]; //AT command buffer
+    float fTemperatureValue = 0.0f; // Initialize to 0 in case of failure
+
 
     psLocationData = GetLocationData();
+    CalculateTemperature(&fTemperatureValue);
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+       sprintf(cPayload, "%.6f/%.6f/Temp:%.2f°C", psLocationData->dLatitude, psLocationData->dLongitude, fTemperatureValue);
+       //  sprintf(cPayload, "%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
         printk("sending data: %s\n\r", cPayload);
         sprintf(cATcmd, "AT+AWS=CMD MCU_DATA %d %s %s\r\n", CFG_NUM, CFG_NAME, cPayload);
         print_uart(cATcmd);
@@ -574,8 +578,6 @@ bool SendLocation()
 
     return bRetVal;
 }
-
-
 _sAtCmdHandle *GetATCmdHandle()
 {   
     return &sAtCmdHandle;
