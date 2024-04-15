@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +30,10 @@
 #include <cJSON.h>
 #include <cJSON_os.h>
 #include <zephyr/logging/log.h>
+
+#include "NVS/NvsHandler.h"
+#include "Temp_MCP/TempAdcHandler.h"
+#include "zephyr/sys/printk.h"
 
 #define STACKSIZE 			2048
 #define THREAD0_PRIORITY 	7
@@ -699,6 +704,7 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	char *message;
 	int64_t message_ts = 0;
 	int16_t bat_voltage = 0;
+	float fTemperatureValue = 0.0f; // Initialize to 0 in case of failure
 
 	err = date_time_now(&message_ts);
 	if (err) {
@@ -732,13 +738,16 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	} else {
 		err = 0;
 	}
+    
 
+    CalculateTemperature(&fTemperatureValue);
 	printf("\n Latitude : %f", pvt_data->latitude);
 	printf("\n Longitude : %f", pvt_data->longitude);
 	//err += json_add_number(reported_obj, "Battery_voltage", bat_voltage);
 	err += json_add_number(reported_obj, "ts", message_ts);
 	err += json_add_number(reported_obj, "latitude", pvt_data->latitude);
 	err += json_add_number(reported_obj, "longitude", pvt_data->longitude);
+	err += json_add_number(reported_obj, "temperature", fTemperatureValue);
 	//err += json_add_number(reported_obj, "altitude", pvt_data->altitude);
 	err += json_add_number(reported_obj, "flags", pvt_data->flags);
 	//err += json_add_number(reported_obj, "speed", pvt_data->speed);
@@ -1020,6 +1029,7 @@ int main(void)
 	cJSON_Init();
 	InitUart();
 	InitBleUart();
+	InitializeSaadc();
 
 	LOG_INF("Starting GNSS AWS sample");
 
@@ -1220,6 +1230,52 @@ handle_nmea:
 		k_msleep(10);
 	}
 } 
+static bool CheckForConfig()
+{
+	int nRetVal = 0;
+	bool bRet = false;
+    uint8_t uReadBuf[255] = {0};
+    uint8_t uCredentialIdx = 0;
+
+#ifdef NVS_ENABLE
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+
+	
+
+	nRetVal = NvsRead(uReadBuf, (sizeof(_sConfigData) * 5 ), CONFIG_IDX); 
+
+	if (nRetVal == sizeof(_sConfigData) * 5)
+	{
+		memcpy(psConfigData, (_sConfigData *)uReadBuf, sizeof(_sConfigData) * 5);
+		for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+		{
+			if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+			{
+				printk("DEBUG : Wifi SSID : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucSsid);
+				printk("DEBUG : Wifi Pwd : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucPwd);
+				printk("DEBUG : Wifi Last Connected status : %d\n", psConfigData[uCredentialIdx].bWifiStatus);
+
+				memset(uReadBuf, 0, sizeof(uReadBuf));
+				sprintf(uReadBuf, "%s,%s", psConfigData[uCredentialIdx].sWifiCred.ucSsid, psConfigData[uCredentialIdx].sWifiCred.ucPwd);
+				SetAPCredentials(uReadBuf);
+				printk("DEBUG : Read string from flash %s\n", uReadBuf);
+			}
+			else 
+			{
+				continue;
+			}
+		}   
+		bRet = true;
+	
+    
+	}
+   
+#endif
+
+    return bRet;
+}
 
 /**
  * @brief 	   : System Handler Task
@@ -1229,11 +1285,39 @@ handle_nmea:
 */
 static void SystemTask()
 {
-	while (1)
+
+	int nRetVal = 0;
+#ifdef NVS_ENABLE
+	nRetVal = NvsInit();
+
+	if (nRetVal != 0)
 	{
+		
+	}
+	if (CheckForConfig())
+	{
+		printk("DEBUG : Config successfully");
+
+	}
+	else
+	{
+		printk("ERROR : Failed to configure");
+	}
+#endif
+	while (1)
+	{   
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
 		k_msleep(10);
+// #ifdef NVS_ENABLE
+// 		nRetVal = NvsWrite(buf, sizeof(buf), CONFIG_IDX);
+// 		k_msleep(100);
+// 		nRetVal = NvsRead(buf, sizeof(buf), CONFIG_IDX);
+
+// 		printk("DEBUG : Read Buffer %s\n", buf);
+// 		k_msleep(100);
+// #endif
+
 	}
 }

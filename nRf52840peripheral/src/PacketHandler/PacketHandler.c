@@ -57,6 +57,8 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
 {
     bool bRetVal = false;
 
+    printk("DEBUG : ParsePacket\n\r");
+
     if (pucRcvdBuffer && psPacket)
     {
         printk("Inside parse packet\n\r");

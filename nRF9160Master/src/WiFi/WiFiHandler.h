@@ -11,6 +11,7 @@
 #define _WIFI_HANDLER_H
 
 /*********************************************INCLUDES***************************************************/
+
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
@@ -42,17 +43,25 @@ typedef struct __sAtCmdHandle
     char *pcArgs[ARGS_CNT];
 }_sAtCmdHandle;
 
+typedef struct __attribute__((__packed__)) __sWifiCred
+{
+    uint8_t ucSsid[20];
+    uint8_t ucPwd[20];
+}_sWifiCred;
+
 /***********************************************FUNCTION DECLARATIONS**************************************/
 bool InitUart(void);
 void ProcessResponse(const char *pcResp, bool *pbStatus);
 bool ConfigureWiFi();
 bool IsWiFiConnected();
-void ProcessWiFiMsgs();
-bool SendLocation();
+bool ProcessWiFiMsgs();
+bool SendPayload();
 bool ReadBuff(void);
 bool DisconnectFromWiFi();
 char *GetAPCredentials(void);
 void SetAPCredentials(char *pcCredential);
+_sAtCmdHandle *GetATCmdHandle();
+void SetWifiCred(char *pcSsid, char *pcPwd);
 #endif
 
 //EOF

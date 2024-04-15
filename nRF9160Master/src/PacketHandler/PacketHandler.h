@@ -48,6 +48,7 @@ bool ProcessCmd(char *pcCmd);
 bool ProcessResp(char *pcResp);
 bool ProcessPayload(char *pcPayload);
 void parseWifiCred(const char *pcCmd, char *pcCredential);
+int WriteCredToFlash();
 #endif
 
 //EOF

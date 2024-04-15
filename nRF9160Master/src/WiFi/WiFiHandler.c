@@ -10,6 +10,7 @@
 #include "WiFiHandler.h"
 #include "../System/SystemHandler.h"
 #include <string.h>
+#include "../NVS/NvsHandler.h"
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
@@ -23,6 +24,8 @@
 
 char cWifiCredentials[80] = "Alcodex,Adx@2013"; //SSID and password
 
+
+
 /******************************************GLOBALS VARIABLES**********************************************/
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 bool bResponse = false;         //For check response received for AT command
@@ -34,6 +37,8 @@ static _eWiFiUartRxState eWiFiUartRxState = UART_START;
 static uint16_t usRxBufferIdx = 0;
 /*Flag for packet receive completion*/
 static bool bRxCmplt = false;
+static char cSsid[20] = {0};
+static char cPwd[20] = {0};
 
 K_MSGQ_DEFINE(UartMsgQueue, MSG_SIZE, 10, 4);
 /*****************************************PRIVATE FUNCTIONS***********************************************/
@@ -53,6 +58,8 @@ _sAtCmdHandle sAtCmdHandle[] = {
     {"AT+AWS=CMD MCU_DATA 0 latshad init\r\n",      SendCommand,     ProcessResponse,       0,            {NULL}                    },
     {"AT+AWS=CFG %d %s 1 0\r\n",                    SendCmdWithArgs, ProcessResponse,       2,            {CFG_NUM, CFG_NAME, NULL} },
 };  
+
+
 
 
 /******************************************FUNCTION DEFINITIONS******************************************/  
@@ -250,10 +257,44 @@ static void CheckAPDisconnected(const char *pcResp, bool *pbStatus)
 */
 static void CheckAPConnected(const char *pcResp, bool *pbStatus)
 {
+    #ifdef NVS_ENABLE
+    int8_t uCredentialIdx = 0;
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+#endif
     if (strstr(pcResp, "+WFJAP:1") != NULL)
     {
         *pbStatus = true;
-    }
+        if (strstr(pcResp, cSsid) != NULL) 
+        {
+#ifdef NVS_ENABLE
+        for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+        {
+
+            if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+            {
+                continue;
+            }
+            else 
+            {
+                if (strstr(pcResp, cSsid) != NULL) 
+                {
+                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSsid, strlen(cSsid));
+                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPwd, strlen(cPwd));
+                psConfigData[uCredentialIdx].bWifiStatus = false;
+                psConfigData[uCredentialIdx].bCredAddStatus = true;
+                }
+                
+                break;
+            }
+
+        }
+        WriteCredToFlash();
+
+#endif       
+        }
+    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
     else
     {
         *pbStatus = false;
@@ -296,22 +337,22 @@ void SetAPCredentials(char *pcCredential)
  * @param [out] : None 
  * @return      : None
 */
-void ProcessWiFiMsgs()
+bool ProcessWiFiMsgs( )
 {
     char cRxBuffer[255];
-
     _eDevState *DevState = NULL;
     bool bStatus = false;
 
     DevState = GetDeviceState();
-
     if (0 == k_msgq_get(&UartMsgQueue, cRxBuffer, K_MSEC(100)))
     {
+        printk("DEBUG: DA RESPONSE%s\n", cRxBuffer);
         CheckAPConnected(cRxBuffer, &bStatus);
-
         if (bStatus)
         {
-            SetDeviceState(WIFI_CONNECTED);
+            SetDeviceState(WIFI_CONNECTED); 
+            printk("DEBUG: Device connected to %s\n", cRxBuffer);
+            return bStatus;        
         }
         
         CheckAPDisconnected(cRxBuffer, &bStatus);
@@ -319,8 +360,11 @@ void ProcessWiFiMsgs()
         if (bStatus)
         {
             SetDeviceState(WIFI_DISCONNECTED);
+            printk("DEBUG: Device disconnected connected to %s\n", cRxBuffer);
+            return bStatus;
         }
     }
+
 }
 
 /**
@@ -349,9 +393,11 @@ void ProcessResponse(const char *pcResp, bool *pbStatus)
 */
 static void ProcessConnectionStatus(const char *pcResp, bool *pbStatus)
 {
+
     if (strstr(pcResp, "+WFSTA:1") != NULL)
     {
         *pbStatus = true;
+
     }
     else
     {
@@ -452,7 +498,7 @@ bool DisconnectFromWiFi()
     print_uart(cCmdBuff);
 
     k_msgq_get(&UartMsgQueue, cCmdBuff, K_MSEC(100));
-    printk("Response: %s\n\r", cCmdBuff);
+    printk("Disconnect Cmd Response: %s\n\r", cCmdBuff);
     ProcessResponse(cCmdBuff, &bResponse);
 
     if (bResponse)
@@ -502,23 +548,27 @@ static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc)
 }
 
 /**
- * @brief       : function for sending location data over WiFi
+ * @brief       : function for sending payload data over WiFi
  * @param [in]  : None
  * @param [out] : None
  * @return      : true for success
 */
-bool SendLocation()
+bool SendPayload()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
     char cPayload[50]; //Location data buffer
-    char cATcmd[100]; //AT command buffer 
+    char cATcmd[100]; //AT command buffer
+    float fTemperatureValue = 0.0f; // Initialize to 0 in case of failure
+
 
     psLocationData = GetLocationData();
+    CalculateTemperature(&fTemperatureValue);
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+       sprintf(cPayload, "%.6f/%.6f/Temp:%.2f°C", psLocationData->dLatitude, psLocationData->dLongitude, fTemperatureValue);
+       //  sprintf(cPayload, "%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
         printk("sending data: %s\n\r", cPayload);
         sprintf(cATcmd, "AT+AWS=CMD MCU_DATA %d %s %s\r\n", CFG_NUM, CFG_NAME, cPayload);
         print_uart(cATcmd);
@@ -527,6 +577,17 @@ bool SendLocation()
     }
 
     return bRetVal;
+}
+_sAtCmdHandle *GetATCmdHandle()
+{   
+    return &sAtCmdHandle;
+}
+
+
+void SetWifiCred(char *pcSsid, char *pcPwd)
+{
+    strcpy(cSsid, pcSsid);
+    strcpy(cPwd, pcPwd);
 }
 
 //EOF
