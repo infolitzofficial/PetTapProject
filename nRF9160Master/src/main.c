@@ -704,6 +704,7 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	char *message;
 	int64_t message_ts = 0;
 	int16_t bat_voltage = 0;
+	float fTemperatureValue = 0.0f; // Initialize to 0 in case of failure
 
 	err = date_time_now(&message_ts);
 	if (err) {
@@ -737,13 +738,16 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	} else {
 		err = 0;
 	}
+    
 
+    CalculateTemperature(&fTemperatureValue);
 	printf("\n Latitude : %f", pvt_data->latitude);
 	printf("\n Longitude : %f", pvt_data->longitude);
 	//err += json_add_number(reported_obj, "Battery_voltage", bat_voltage);
 	err += json_add_number(reported_obj, "ts", message_ts);
 	err += json_add_number(reported_obj, "latitude", pvt_data->latitude);
 	err += json_add_number(reported_obj, "longitude", pvt_data->longitude);
+	err += json_add_number(reported_obj, "temperature", fTemperatureValue);
 	//err += json_add_number(reported_obj, "altitude", pvt_data->altitude);
 	err += json_add_number(reported_obj, "flags", pvt_data->flags);
 	//err += json_add_number(reported_obj, "speed", pvt_data->speed);
@@ -1025,7 +1029,7 @@ int main(void)
 	cJSON_Init();
 	InitUart();
 	InitBleUart();
-	initialize_saadc();
+	InitializeSaadc();
 
 	LOG_INF("Starting GNSS AWS sample");
 
@@ -1302,7 +1306,6 @@ static void SystemTask()
 #endif
 	while (1)
 	{   
-		calculate_Temperature(); //called to get the temperature 
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();

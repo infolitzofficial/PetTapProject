@@ -21,10 +21,10 @@
 
  
 /**************************************FUNCTION DECLARATIONS****************/
-static float adc_to_temperature(uint16_t adc_value);
-void initialize_saadc(void) ;
+static float AdcToTemperature(uint16_t iAdcValue);
+void InitializeSaadc(void) ;
 uint16_t AnalogRead(void);
-void calculate_Temperature(void);
+void CalculateTemperature(float *pfTemperature);
  
 #endif 
 //EOF
