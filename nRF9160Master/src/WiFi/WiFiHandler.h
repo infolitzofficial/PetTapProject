@@ -62,6 +62,7 @@ char *GetAPCredentials(void);
 void SetAPCredentials(char *pcCredential);
 _sAtCmdHandle *GetATCmdHandle();
 void SetWifiCred(char *pcSsid, char *pcPwd);
+uint8_t CheckLastConnectedStatus(void);
 #endif
 
 //EOF

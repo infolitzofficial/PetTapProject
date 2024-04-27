@@ -120,10 +120,10 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
     char cSSID[20] = {0};
     char cPassword[50] = {0};
 #ifdef NVS_ENABLE
-    int8_t uCredentialIdx = 0;
-    _sConfigData *psConfigData = NULL;
+    // int8_t uCredentialIdx = 0;
+    // _sConfigData *psConfigData = NULL;
 
-    psConfigData = GetConfigData();
+    // psConfigData = GetConfigData();
 #endif
 
     if (sscanf(pcCmd, "ssid:%[^,],pwd:%s", cSSID, cPassword) == 2)
@@ -132,23 +132,23 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
         SetWifiCred(cSSID, cPassword);
 
 #ifdef NVS_ENABLE
-        for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
-        {
+        // for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
+        // {
 
-            if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
-            {
-                continue;
-            }
-            else 
-            {
-                // memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSSID, strlen(cSSID));
-                // memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPassword, strlen(cPassword));
-                // psConfigData[uCredentialIdx].bWifiStatus = false;
-                // psConfigData[uCredentialIdx].bCredAddStatus = true;
-                break;
-            }
+        //     if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
+        //     {
+        //         continue;
+        //     }
+        //     else 
+        //     {
+        //         // memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSSID, strlen(cSSID));
+        //         // memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPassword, strlen(cPassword));
+        //         // psConfigData[uCredentialIdx].bWifiStatus = false;
+        //         // psConfigData[uCredentialIdx].bCredAddStatus = true;
+        //         break;
+        //     }
 
-        }
+        // }
 #endif
 
     }

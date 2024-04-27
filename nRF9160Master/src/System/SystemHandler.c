@@ -10,6 +10,9 @@
 #include "SystemHandler.h"
 #include "../WiFi/WiFiHandler.h"
 #include "../PacketHandler/PacketHandler.h"
+#include "../NVS/NvsHandler.h"
+#include "zephyr/sys/printk.h"
+#include <sys/_stdint.h>
 
 /*******************************************MACROS**********************************************************/
 #define BUFFER_SIZE     255
@@ -20,6 +23,8 @@ _sGnssConfig sGnssConfig = {0.0,0.0,false};
 static bool bConfigStatus = false;
 struct k_timer Timer;
 static bool TimerExpired = false;
+static long long llSysTick = 0;
+static uint8_t uCredIdx = 0;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
@@ -78,12 +83,22 @@ void ProcessDeviceState()
 {
     uint32_t TimeNow = 0;
     int nRetry = 2;
+    long long llCurrentTick = 0;
+    _sAtCmdHandle *psAtCmdHndler = NULL;
+#ifdef NVS_ENABLE
+    _sConfigData *psConfigData = NULL;
+    char uReadBuf[256] = {0};
+
+    psConfigData = GetConfigData();
+#endif
+    psAtCmdHndler = GetATCmdHandle();
 
     switch(DevState)
     {
         case DEV_IDLE:
                     //Perform Configuration
                     printk("INFO: IDLE STATE\n\r");
+                    llSysTick = sys_clock_tick_get();
 
                     do
                     {
@@ -103,6 +118,7 @@ void ProcessDeviceState()
 
         case WAIT_CONNECTION:
                     printk("Info: Sending connection request to BLE\n\r");
+                    llCurrentTick = sys_clock_tick_get();
                     if (ConnectToBLE())
                     {
                         SetDeviceState(WAIT_CONNECTION);
@@ -117,19 +133,36 @@ void ProcessDeviceState()
                         SetDeviceState(DEV_IDLE);
                     }
 
+                    if ((llCurrentTick - llSysTick) >= (20 * 32768)) 
+                    {
+                        sprintf(uReadBuf, "%s,%s", psConfigData[uCredIdx].sWifiCred.ucSsid, psConfigData[uCredIdx].sWifiCred.ucPwd);
+                        SetAPCredentials(uReadBuf);
+                        printk("Send APCredentials request to DA***************************%s\n\r", uReadBuf);
+                        psAtCmdHndler[2].CmdHdlr(psAtCmdHndler[2].pcCmd, psAtCmdHndler[2].pcArgs, psAtCmdHndler[2].nArgsCount);
+                        if (uCredIdx > 5) 
+                        {
+                            uCredIdx = 1;
+                        }
+                        else 
+                        {
+                            uCredIdx++;
+                        }
+                        llSysTick = llCurrentTick;
+                    }
+
                     printk("INFO: waiting connection\n\r");
                     k_msleep(500);
                     break;
 
         case WIFI_CONNECTED:
                     printk("INFO: Connected to WiFi\n\r");
-                    InitTimerTask(30);
+                    StarTimerTask(30);
                     SetDeviceState(WIFI_DEVICE);
                     break;
 
         case WIFI_DEVICE:
                     if (TimerExpired)
-                    {   if (IsWiFiConnected)
+                    {   if (IsWiFiConnected())
                         {
                             if (IsLocationDataOK())
                             {
@@ -282,9 +315,14 @@ static void TimerStoppedCb(struct k_timer *timer)
  * @param [out] : None
  * @return      : None
 */
-void InitTimerTask(int nPeriod)
+void InitTimerTask()
 {
     k_timer_init(&Timer, TimerExpiredCb, TimerStoppedCb);
+    
+}
+
+void StarTimerTask(int nPeriod)
+{
     k_timer_start(&Timer, K_SECONDS(0), K_SECONDS(nPeriod));
 }
 

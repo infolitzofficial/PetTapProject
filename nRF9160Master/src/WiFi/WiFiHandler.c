@@ -10,19 +10,22 @@
 #include "WiFiHandler.h"
 #include "../System/SystemHandler.h"
 #include <string.h>
+#include <sys/_stdint.h>
 #include "../NVS/NvsHandler.h"
+#include "zephyr/sys/printk.h"
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
 #define WIFI_SSID_PWD       "realme GT 5G,s3qqyipp" //Change this line with SSID and password of choice
-#define AWS_BROKER		    "a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
+//#define AWS_BROKER		"a1kzdt4nun8bnh-ats.iot.ap-northeast-2.amazonaws.com"
+#define AWS_BROKER          "a3kbzziaf9hg4n-ats.iot.us-east-1.amazonaws.com"
 #define AWS_THING 		    "test_aws_iot"
 #define AWS_TOPIC 		    "test_aws_iot/testtopic"
 #define CFG_NUM 	        1
 #define CFG_NAME 	        "latlong"
 #define RETRY_COUNT         2
 
-char cWifiCredentials[80] = "Alcodex,Adx@2013"; //SSID and password
+char cWifiCredentials[80] = "realme GT 5G,s3qqyipp"; //SSID and password
 
 
 
@@ -274,23 +277,30 @@ static void CheckAPConnected(const char *pcResp, bool *pbStatus)
 
             if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
             {
-                continue;
+                psConfigData[uCredentialIdx].bWifiStatus = false;
             }
             else 
             {
                 if (strstr(pcResp, cSsid) != NULL) 
                 {
-                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSsid, strlen(cSsid));
-                memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPwd, strlen(cPwd));
-                psConfigData[uCredentialIdx].bWifiStatus = false;
-                psConfigData[uCredentialIdx].bCredAddStatus = true;
+                    printk("Writting SSIS : %s\n", cSsid);
+                    printk("Writting SSIS : %s\n", cSsid);
+                    memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucSsid, cSsid, strlen(cSsid));
+                    memcpy(&psConfigData[uCredentialIdx].sWifiCred.ucPwd, cPwd, strlen(cPwd));
+                    psConfigData[uCredentialIdx].bWifiStatus = true;
+                    psConfigData[uCredentialIdx].bCredAddStatus = true;
+
+                    memset(cSsid, 0, sizeof(cSsid));
+                    memset(cPwd, 0, sizeof(cPwd));
+
+                    WriteCredToFlash();
                 }
                 
                 break;
             }
 
         }
-        WriteCredToFlash();
+        
 
 #endif       
         }
@@ -587,5 +597,34 @@ void SetWifiCred(char *pcSsid, char *pcPwd)
     strcpy(cSsid, pcSsid);
     strcpy(cPwd, pcPwd);
 }
+
+uint8_t CheckLastConnectedStatus(void)
+{
+#ifdef NVS_ENABLE
+    int8_t uCredentialIdx = 0;
+    _sConfigData *psConfigData = NULL;
+
+    psConfigData = GetConfigData();
+
+    // Loop through all credentials
+    for (uCredentialIdx = 0; uCredentialIdx < 5; uCredentialIdx++)
+    {
+        // Check if the credential is added
+        if (psConfigData[uCredentialIdx].bCredAddStatus == true)
+        {
+            // Check the last connected status
+            if (psConfigData[uCredentialIdx].bWifiStatus == true)
+            {
+                // Return idex
+                return uCredentialIdx;
+            }
+        }
+    }
+#endif
+
+    // If not found, return false
+    return false;
+}
+
 
 //EOF

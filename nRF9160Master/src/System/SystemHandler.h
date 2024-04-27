@@ -42,7 +42,8 @@ void SetDeviceState(_eDevState DeviceState);
 bool IsLocationDataOK(void);
 void SetLocationDataStatus(bool bStatus);
 bool UpdateLocation(_sGnssConfig *psLocationData);
-void InitTimerTask(int nPeriod);
+void InitTimerTask();
+void StarTimerTask(int nPeriod);
 _sGnssConfig * GetLocationData();
 
 #endif

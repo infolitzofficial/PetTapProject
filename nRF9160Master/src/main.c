@@ -18,7 +18,7 @@
 #include <date_time.h>
 #include "WiFi/WiFiHandler.h"
 #include "System/SystemHandler.h"
-
+#include "BMS/BMHandler.h"
 
 // aws
 #include <modem/modem_info.h>
@@ -1024,6 +1024,7 @@ int main(void)
 	cJSON_Init();
 	InitUart();
 	InitBleUart();
+	InitI2CCharger();
 
 	LOG_INF("Starting GNSS AWS sample");
 
@@ -1243,27 +1244,14 @@ static bool CheckForConfig()
 	if (nRetVal == sizeof(_sConfigData) * 5)
 	{
 		memcpy(psConfigData, (_sConfigData *)uReadBuf, sizeof(_sConfigData) * 5);
-		for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
-		{
-			if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
-			{
-				printk("DEBUG : Wifi SSID : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucSsid);
-				printk("DEBUG : Wifi Pwd : %s\n", psConfigData[uCredentialIdx].sWifiCred.ucPwd);
-				printk("DEBUG : Wifi Last Connected status : %d\n", psConfigData[uCredentialIdx].bWifiStatus);
 
-				memset(uReadBuf, 0, sizeof(uReadBuf));
-				sprintf(uReadBuf, "%s,%s", psConfigData[uCredentialIdx].sWifiCred.ucSsid, psConfigData[uCredentialIdx].sWifiCred.ucPwd);
-				SetAPCredentials(uReadBuf);
-				printk("DEBUG : Read string from flash %s\n", uReadBuf);
-			}
-			else 
-			{
-				continue;
-			}
-		}   
+		uCredentialIdx = CheckLastConnectedStatus();
+		sprintf(uReadBuf, "%s,%s", psConfigData[uCredentialIdx].sWifiCred.ucSsid, psConfigData[uCredentialIdx].sWifiCred.ucPwd);
+		SetAPCredentials(uReadBuf);
+		printk("DEBUG : Read string from flash %s!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n", uReadBuf);
+   
 		bRet = true;
 	
-    
 	}
    
 #endif
@@ -1281,6 +1269,10 @@ static void SystemTask()
 {
 
 	int nRetVal = 0;
+	float fVolt = 0.00;
+	float fTemp = 0.0;
+
+	InitTimerTask();
 #ifdef NVS_ENABLE
 	nRetVal = NvsInit();
 
@@ -1303,6 +1295,11 @@ static void SystemTask()
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
+
+		fVolt = ReadI2CVoltage();
+		fTemp = ReadI2CTemperature();
+
+		printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
 		k_msleep(10);
 // #ifdef NVS_ENABLE
 // 		nRetVal = NvsWrite(buf, sizeof(buf), CONFIG_IDX);

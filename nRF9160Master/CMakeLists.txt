@@ -14,7 +14,8 @@ zephyr_library_sources(src/main.c
                     src/System/SystemHandler.c
                     src/BLE/BleHandler.c
                     src/PacketHandler/PacketHandler.c
-                    src/NVS/NvsHandler.c)
+                    src/NVS/NvsHandler.c
+                    src/BMS/BMHandler.c)
 
 zephyr_library_sources_ifdef(CONFIG_GNSS_SAMPLE_ASSISTANCE_NRF_CLOUD src/assistance.c)
 zephyr_library_sources_ifdef(CONFIG_GNSS_SAMPLE_ASSISTANCE_SUPL src/assistance_supl.c)
