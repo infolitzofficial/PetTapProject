@@ -13,6 +13,7 @@
 #include <sys/_stdint.h>
 #include "../NVS/NvsHandler.h"
 #include "zephyr/sys/printk.h"
+#include "../BMS/BMHandler.h"
 
 /*******************************************MACROS*********************************************************/
 #define MSG_SIZE 255
@@ -25,7 +26,7 @@
 #define CFG_NAME 	        "latlong"
 #define RETRY_COUNT         2
 
-char cWifiCredentials[80] = "realme GT 5G,s3qqyipp"; //SSID and password
+char cWifiCredentials[80] = "Alcodex,Adx@2013"; //SSID and password
 
 
 
@@ -563,18 +564,22 @@ static void SendCmdWithArgs(const char *cmd, char *pcArgs[], int nArgc)
  * @param [out] : None
  * @return      : true for success
 */
-bool SendLocation()
+bool SendPayload()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
     char cPayload[50]; //Location data buffer
     char cATcmd[100]; //AT command buffer 
-
+    float fTempCharger = 0.0; 
+    float fVoltcharger=0.00;
+    fVoltcharger= ReadI2CVoltage();
+    fTempCharger= ReadI2CTemperature();
     psLocationData = GetLocationData();
+    
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f/%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+        sprintf(cPayload,"%.6f/%.6f/VC:%.2f/TC:%.2f", psLocationData->dLatitude, psLocationData->dLongitude, fVoltcharger, fTempCharger);
         printk("sending data: %s\n\r", cPayload);
         sprintf(cATcmd, "AT+AWS=CMD MCU_DATA %d %s %s\r\n", CFG_NUM, CFG_NAME, cPayload);
         print_uart(cATcmd);

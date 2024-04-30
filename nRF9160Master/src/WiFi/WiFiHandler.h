@@ -55,7 +55,7 @@ void ProcessResponse(const char *pcResp, bool *pbStatus);
 bool ConfigureWiFi();
 bool IsWiFiConnected();
 bool ProcessWiFiMsgs();
-bool SendLocation();
+bool SendPayload();
 bool ReadBuff(void);
 bool DisconnectFromWiFi();
 char *GetAPCredentials(void);

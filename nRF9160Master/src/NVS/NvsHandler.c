@@ -14,7 +14,7 @@ static struct nvs_fs sNvsFileSystem = {0};
 
 static _sConfigData 
 sConfigData[5] = {
-    {{"realme GT 5G", "s3qqyipp"}, true, true},
+    {{"Alcodex", "Adx@2013"}, true, true},
     {{0, 0}, false, false},
     {{0, 0}, false, false},
     {{0, 0}, false, false},

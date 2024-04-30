@@ -166,7 +166,7 @@ void ProcessDeviceState()
                         {
                             if (IsLocationDataOK())
                             {
-                                if (SendLocation())
+                                if (SendPayload())
                                 {
                                     printk("INFO: Location sent success\n\r");
                                     TimerExpired=false;
