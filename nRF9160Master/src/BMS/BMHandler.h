@@ -14,4 +14,4 @@ void InitI2CCharger(void);
 float ReadI2CVoltage(void);
 float ReadI2CTemperature(void); 
 #endif 
-//EOF
+//EOF 

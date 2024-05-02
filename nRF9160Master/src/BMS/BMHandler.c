@@ -8,6 +8,7 @@
 #include "zephyr/sys/printk.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/_stdint.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -111,33 +112,39 @@ float ReadI2CVoltage(void)
 
 float ReadI2CTemperature(void) 
 {
-    uint8_t ucTData1 = 0;
-    uint8_t ucTData2 = 0;
-    uint16_t usTData = 0;
+    int8_t ucTData1 = 0;
+    int8_t ucTData2 = 0;
+    int16_t sTData = 0;
 
-    while ( !( ( ucTData1 & 0x08 ) ) )
+    while (!(ucTData1 & 0x08))
     {
-        i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, 0x01, &ucTData1);\
+        i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, 0x01, &ucTData1);
         k_msleep(10);
     }
 
     // Read temperature data from I2C registers
-    i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, RegTemperatureLowByte, &ucTData1);
+    i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, RegTemperatureLowByte, (uint8_t *)&ucTData1);
     k_msleep(10);
-    //printk("ucTData1:%02x\r\n",ucTData1);
-    i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, RegTemperatureHighByte, &ucTData2);
-    // printk("ucTData2:%02x\r\n",ucTData2);
+    printk("ucTData1:%d\r\n", ucTData1);
+    i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, RegTemperatureHighByte, (uint8_t *)&ucTData2);
+    printk("ucTData2:%d\r\n", ucTData2);
 
     // Combine high and low bytes to form 16-bit temperature data
-    usTData = ((uint16_t)ucTData2 << 8) | ucTData1;
+    sTData = ((int16_t)ucTData2 << 8) | (int8_t)ucTData1;
 
-    printk("DEBUG_Charger : Buffer temp read from I2C is %d\n\r", usTData);
+    // Check if temperature is negative
+    // if (sTData & 0x8000 == 0) {
+    //     // Convert from two's complement to signed integer
+    //     sTData = -(~sTData + 1);
+    // }
 
+    sTData = (~(sTData - 0x01)) * -1;
 
-    // Convert temperature data to degrees Celsius (assuming a conversion factor of 0.125)
-    float fTemp = usTData * 0.125;
+    // Convert temperature data to degrees Celsius
+    float fTemp = sTData * 0.125;
 
     return fTemp;
 }
+
 
  

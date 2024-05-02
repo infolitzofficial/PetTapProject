@@ -1271,6 +1271,7 @@ static void SystemTask()
 	int nRetVal = 0;
 	float fVolt = 0.00;
 	float fTemp = 0.0;
+	
 
 	InitTimerTask();
 #ifdef NVS_ENABLE

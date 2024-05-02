@@ -10,6 +10,8 @@
 #include "../System/SystemHandler.h"
 #include "../PacketHandler/PacketHandler.h"
 #include "BleHandler.h"
+#include "zephyr/sys/printk.h"
+#include "../BMS/BMHandler.h"
 
 /*******************************************MACROS**********************************************************/
 #define MSG_SIZE        255
@@ -80,6 +82,7 @@ bool ReadBuffer(void)
                             memset(cRxBuffer, 0, sizeof(cRxBuffer));
                             cRxBuffer[usRxBufferIdx++] = ucByte;
                             eUartRxState = RCV;
+                           
                         }
                         break;
 
@@ -199,7 +202,6 @@ void ProcessBleResponse(const char *pcResp, bool *pbStatus)
 bool ReadPacket(uint8_t *pucBuffer)
 {
     bool bRetVal = false;
-
     if (0 == k_msgq_get(&BleMsgQueue, pucBuffer, K_MSEC(100)))
     {
         printk("Data Received\n\r");
@@ -215,18 +217,21 @@ bool ReadPacket(uint8_t *pucBuffer)
  * @param [out] : None
  * @return      : true for success
 */
-bool SendLocationToBle()
+bool SendPayloadToBle()
 {
     _sGnssConfig *psLocationData = NULL;
     bool bRetVal = false;
     char cPayload[PAYLOAD_SIZE];
     _sPacket sPacket = {0};
-
+    float fTempCharger = 0.0; 
+    float fVoltcharger=0.00;
+    fVoltcharger= ReadI2CVoltage();
+    fTempCharger= ReadI2CTemperature();
     psLocationData = GetLocationData();
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f,%.6f", psLocationData->dLatitude, psLocationData->dLongitude);
+        sprintf(cPayload,"%.6f/%.6f/VC:%.2f/TC:%.2f", psLocationData->dLatitude, psLocationData->dLongitude, fVoltcharger, fTempCharger);
         printk("sending data: %s\n\r", cPayload);
         BuildPacket(&sPacket, RESP, (uint8_t *)cPayload, strlen(cPayload));
         SendBleMsg(&sPacket, sizeof(_sPacket));
