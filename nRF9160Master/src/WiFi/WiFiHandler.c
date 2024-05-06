@@ -9,6 +9,7 @@
 /*******************************************INCLUDES********************************************************/
 #include "WiFiHandler.h"
 #include "../System/SystemHandler.h"
+#include "../PacketHandler/PacketHandler.h"
 #include <string.h>
 #include <sys/_stdint.h>
 #include "../NVS/NvsHandler.h"

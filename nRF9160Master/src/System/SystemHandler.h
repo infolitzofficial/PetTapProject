@@ -25,7 +25,8 @@ typedef enum __eDevState
     WIFI_DEVICE,
     BLE_DEVICE,
     DEV_IDLE,
-}_eDevState;
+}
+_eDevState;
 
 typedef struct __sGnssConfig
 {
@@ -45,6 +46,8 @@ bool UpdateLocation(_sGnssConfig *psLocationData);
 void InitTimerTask();
 void StarTimerTask(int nPeriod);
 _sGnssConfig * GetLocationData();
+bool GetWifiStatus();                           
+int SetWifiStatus(bool flag);                    
 
 #endif
 

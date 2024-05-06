@@ -1270,7 +1270,7 @@ static void SystemTask()
 
 	int nRetVal = 0;
 	float fVolt = 0.00;
-	float fTemp = 0.0;
+	float fTemp = 0.00;
 	
 
 	InitTimerTask();
@@ -1296,20 +1296,13 @@ static void SystemTask()
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
-
+        
 		fVolt = ReadI2CVoltage();
 		fTemp = ReadI2CTemperature();
 
 		printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
 		k_msleep(10);
-// #ifdef NVS_ENABLE
-// 		nRetVal = NvsWrite(buf, sizeof(buf), CONFIG_IDX);
-// 		k_msleep(100);
-// 		nRetVal = NvsRead(buf, sizeof(buf), CONFIG_IDX);
 
-// 		printk("DEBUG : Read Buffer %s\n", buf);
-// 		k_msleep(100);
-// #endif
 
 	}
 }

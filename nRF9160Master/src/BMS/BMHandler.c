@@ -78,12 +78,11 @@ float ReadI2CVoltage(void)
     uint8_t ucVData2 = 0;
     uint16_t usVData = 0;
     
-    while ( !( ( ucVData1 & 0x08 )) )
+    i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, 0x01, &ucVData1);
+    
+    if ( ( ( ucVData1 & 0x08 )) )
     {
-      i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, 0x01, &ucVData1);
-      k_msleep(10);
-    }
-    ucVData1 = 0;
+      ucVData1 = 0;
 
     // Read voltage data from I2C registers
     i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, RegVoltageLowByte, &ucVData1);
@@ -97,6 +96,13 @@ float ReadI2CVoltage(void)
     float fVolt = (usVData * 2.44) / 1000.0;
 
     return fVolt;
+    }
+    else 
+    {
+        printk("DEBUG : PMIC is not ready for reading Voltage\n\r");
+        // return 0;
+    }
+    
 }
 
 
@@ -116,13 +122,12 @@ float ReadI2CTemperature(void)
     int8_t ucTData2 = 0;
     int16_t sTData = 0;
 
-    while (!(ucTData1 & 0x08))
+     i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, 0x01, &ucTData1);
+ 
+    
+    if ((ucTData1 & 0x08))
     {
-        i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, 0x01, &ucTData1);
-        k_msleep(10);
-    }
-
-    // Read temperature data from I2C registers
+         // Read temperature data from I2C registers
     i2c_reg_read_byte(i2c_dev, SLAVE_ADDRESS, RegTemperatureLowByte, (uint8_t *)&ucTData1);
     k_msleep(10);
     printk("ucTData1:%d\r\n", ucTData1);
@@ -144,6 +149,13 @@ float ReadI2CTemperature(void)
     float fTemp = sTData * 0.125;
 
     return fTemp;
+    }
+    else
+    {
+        printk("DEBUG : PMIC is not ready for reading Temperature\n\r");
+    }
+
+   
 }
 
 

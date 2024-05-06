@@ -15,6 +15,7 @@
 #include <string.h>
 #include <sys/_stdint.h>
 
+
 #include "../NVS/NvsHandler.h"
 
 
@@ -169,15 +170,15 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
 bool ProcessCmd(char *pcCmd)
 {
     bool bRetVal = false;
+    bool WifiStatus = false;
     char cBuffer[80] = {0};
     _sAtCmdHandle *psAtCmdHndler = NULL;
-
-    psAtCmdHndler = GetATCmdHandle();
-
-
     
+    psAtCmdHndler = GetATCmdHandle();
+    WifiStatus    = GetWifiStatus();
 
-    if (pcCmd)
+
+     if (pcCmd)
     {
 #ifdef nRF52840    
         if (strcmp(pcCmd, "CONNECT") == 0)
@@ -192,9 +193,15 @@ bool ProcessCmd(char *pcCmd)
         }
         else if(strcmp(pcCmd, "LOCATION") == 0)
         {
-            if (IsLocationDataOK())
+            if (IsLocationDataOK())    //wifi disconnected      
             {
-                SendPayloadToBle();
+                printk("DEBUG: inside proccescmd");
+                if(!WifiStatus)
+                {
+                    printk("DEBUG: inside WifiStatus ");
+                    SendPayloadToBle();
+                }
+                
             }
             else
             {
