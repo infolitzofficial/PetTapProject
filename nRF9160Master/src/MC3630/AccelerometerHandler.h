@@ -18,10 +18,18 @@ typedef struct {
     short YAxis;
     short ZAxis;
 } MC36XX_acc_t;
+
+typedef struct {
+    short XAxis;
+    short YAxis;
+    short ZAxis;
+} Previous_MC36XX_acc_t;
  
 /**************************************FUNCTION DECLARATIONS****************/
 
 bool GetID3630I2C(void);
 MC36XX_acc_t MC3630readRawAccel(void);
+int PetMove(MC36XX_acc_t PreAccRaw);
+MC36XX_acc_t *GetMC36Data();
 #endif 
 //EOF 

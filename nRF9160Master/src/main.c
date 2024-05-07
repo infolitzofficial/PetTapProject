@@ -1273,6 +1273,7 @@ static void SystemTask()
 	int nRetVal = 0;
 	float fVolt = 0.00;
 	float fTemp = 0.00;
+	int iPetmove;
 	
 
 	InitTimerTask();
@@ -1298,13 +1299,11 @@ static void SystemTask()
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
-        
-		fVolt = ReadI2CVoltage();
-		fTemp = ReadI2CTemperature();
-
-		printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
+		// MC36XX_acc_t rawAccel = MC3630readRawAccel();
+        // k_msleep(10); 
+        // printk("X axis: %d\n", rawAccel.XAxis);
+        // printk("Y axis: %d\n", rawAccel.YAxis);
+        // printk("Z axis: %d\n", rawAccel.ZAxis);
 		k_msleep(10);
-
-
 	}
 }

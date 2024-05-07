@@ -27,7 +27,7 @@
 
 
 static const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c3));
-MC36XX_acc_t AccRaw; 
+MC36XX_acc_t AccRaw;
 
 /**********************************FUNCTION DEFINITIONS****************/
 
@@ -93,4 +93,32 @@ MC36XX_acc_t MC3630readRawAccel(void)
     AccRaw.YAxis = (short) (y);
     AccRaw.ZAxis = (short) (z);
     return AccRaw;
+}
+int PetMove(MC36XX_acc_t PreAccRaw)
+{   
+    
+ 	// MC36XX_acc_t rawAccel = MC3630readRawAccel();
+    MC3630readRawAccel();
+    k_msleep(10);
+
+    // printk("DEBUG : Previous value Xaxis %d\n\r", PreAccRaw.XAxis); 
+    if(PreAccRaw.XAxis!=AccRaw.XAxis||PreAccRaw.YAxis!=AccRaw.YAxis||PreAccRaw.ZAxis!=AccRaw.ZAxis)
+    {
+    /*printk("Previous value X axis: %d, Current value X axis: %d \n", PreAccRaw.XAxis, AccRaw.XAxis);
+     printk("Previous value Y axis: %d, Current value Y axis: %d\n", PreAccRaw.YAxis, AccRaw.YAxis);
+     printk("Previous value Z axis: %d, Current value Z axis: %d\n", PreAccRaw.ZAxis, AccRaw.ZAxis);*/
+     printk("DEBUG:Pet is moving\r\n");
+     return 1;
+    }
+    else
+    {
+     printk("DEBUG:Pet is not moving\r\n");
+     return 0;
+    }
+
+}
+
+MC36XX_acc_t *GetMC36Data()
+{
+    return &AccRaw;
 }
