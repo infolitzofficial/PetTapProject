@@ -1,12 +1,11 @@
 /**
- * @file    I2Cchargerhandler.h
+ * @file    AccelerometerHandler.h
  * @author : Devendu
- * @brief   File to get battery percentage
- * @date    25-04-2023
+ * @brief   File to get coordinates
+ * @date    07-05-2024
  */
-
-#ifndef _I2CCHARGERHANDLER_H
-#define _I2CCHARGERHANDLER_H
+#ifndef _ACCELEROMETERHANDLER_H
+#define _ACCELEROMETERHANDLER_H
  
 /**************************************INCLUDES******************************/
 #include <stddef.h>
@@ -14,11 +13,15 @@
 #include <zephyr/kernel.h>
  
 /***************************************MACROS*******************************/
-
+typedef struct {
+    short XAxis;
+    short YAxis;
+    short ZAxis;
+} MC36XX_acc_t;
  
 /**************************************FUNCTION DECLARATIONS****************/
-void InitI2CCharger(void);
-float ReadI2CVoltage(void);
-float ReadI2CTemperature(void); 
+
+bool GetID3630I2C(void);
+MC36XX_acc_t MC3630readRawAccel(void);
 #endif 
 //EOF 

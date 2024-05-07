@@ -19,6 +19,7 @@
 #include "WiFi/WiFiHandler.h"
 #include "System/SystemHandler.h"
 #include "BMS/BMHandler.h"
+#include "MC3630/AccelerometerHandler.h"
 
 // aws
 #include <modem/modem_info.h>
@@ -1025,6 +1026,7 @@ int main(void)
 	InitUart();
 	InitBleUart();
 	InitI2CCharger();
+	GetID3630I2C();
 
 	LOG_INF("Starting GNSS AWS sample");
 

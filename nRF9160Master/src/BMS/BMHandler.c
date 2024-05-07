@@ -32,12 +32,9 @@
 
 /************************************GLOBALS**************************/
 
-
-/**********************************FUNCTION DEFINITIONS****************/
-
-
 static const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c3));
 
+/**********************************FUNCTION DEFINITIONS****************/
 
 /**
  * @brief Initializes the I2C charger device.
