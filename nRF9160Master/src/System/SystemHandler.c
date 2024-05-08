@@ -170,7 +170,7 @@ void ProcessDeviceState()
                     StarTimerTask(30);
                     SetDeviceState(WIFI_DEVICE);
                     WifiStatusFlag = true;
-                    SetWifiStatus(WifiStatusFlag);
+                    SetWifiStatus(true);
                     break;
 
         case WIFI_DEVICE:
@@ -196,7 +196,7 @@ void ProcessDeviceState()
                     DisconnectFromWiFi();
                     StopTimer();
                     WifiStatusFlag = false;                                 
-                    SetWifiStatus(WifiStatusFlag);                    
+                    SetWifiStatus(false);                      
                     SetDeviceState(WAIT_CONNECTION);                        
                     break;
 

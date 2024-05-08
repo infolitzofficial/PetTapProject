@@ -100,7 +100,7 @@ float ReadI2CVoltage(void)
     else 
     {
         printk("DEBUG : PMIC is not ready for reading Voltage\n\r");
-        // return 0;
+        return 0;
     }
     
 }
@@ -153,6 +153,7 @@ float ReadI2CTemperature(void)
     else
     {
         printk("DEBUG : PMIC is not ready for reading Temperature\n\r");
+        return 0;
     }
 
    
