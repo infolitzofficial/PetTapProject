@@ -19,12 +19,6 @@ typedef struct {
     short ZAxis;
 } MC36XX_acc_t;
 
-typedef struct {
-    short XAxis;
-    short YAxis;
-    short ZAxis;
-} Previous_MC36XX_acc_t;
- 
 /**************************************FUNCTION DECLARATIONS****************/
 
 bool GetID3630I2C(void);

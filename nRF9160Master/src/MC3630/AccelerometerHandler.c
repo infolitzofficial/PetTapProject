@@ -94,6 +94,16 @@ MC36XX_acc_t MC3630readRawAccel(void)
     AccRaw.ZAxis = (short) (z);
     return AccRaw;
 }
+
+/**
+ * @brief Determines pet movement based on accelerometer readings.
+ *
+ * This function checks if there's any change in accelerometer readings compared to the previous readings.
+ * If there's a change in any axis (X, Y, or Z), it indicates pet movement; otherwise, it indicates no movement.
+ *
+ * @param PreAccRaw The previous accelerometer readings.
+ * @return int Returns 1 if pet movement is detected, 0 otherwise.
+ */
 int PetMove(MC36XX_acc_t PreAccRaw)
 {   
     
@@ -117,7 +127,14 @@ int PetMove(MC36XX_acc_t PreAccRaw)
     }
 
 }
-
+/**
+ * @brief Retrieves a pointer to the raw accelerometer data.
+ *
+ * This function returns a pointer to the structure containing the most recent raw accelerometer data
+ * for X, Y, and Z axes.
+ *
+ * @return MC36XX_acc_t* Pointer to the structure containing raw accelerometer data.
+ */
 MC36XX_acc_t *GetMC36Data()
 {
     return &AccRaw;
