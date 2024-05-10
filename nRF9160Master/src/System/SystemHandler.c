@@ -25,6 +25,7 @@ struct k_timer Timer;
 static bool TimerExpired = false;
 static long long llSysTick = 0;
 static uint8_t uCredIdx = 0;
+static bool WifiStatusFlag = false;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
@@ -48,6 +49,16 @@ static bool ConnectToBLE()
     }
 
     return bRetVal;
+}
+
+int SetWifiStatus (bool flag)
+{
+    bool WifiStatusFlag = flag;
+}
+
+bool GetWifiStatus()
+{
+    return WifiStatusFlag;
 }
 
 /**
@@ -158,6 +169,8 @@ void ProcessDeviceState()
                     printk("INFO: Connected to WiFi\n\r");
                     StarTimerTask(30);
                     SetDeviceState(WIFI_DEVICE);
+                    WifiStatusFlag = true;
+                    SetWifiStatus(true);
                     break;
 
         case WIFI_DEVICE:
@@ -182,7 +195,9 @@ void ProcessDeviceState()
                     printk("INFO: AP is not visble\n\r");
                     DisconnectFromWiFi();
                     StopTimer();
-                    SetDeviceState(WAIT_CONNECTION);
+                    WifiStatusFlag = false;                                 
+                    SetWifiStatus(false);                    
+                    SetDeviceState(WAIT_CONNECTION);                        
                     break;
 
         case BLE_CONNECTED:

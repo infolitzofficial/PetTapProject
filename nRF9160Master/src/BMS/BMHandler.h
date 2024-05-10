@@ -1,3 +1,10 @@
+/**
+ * @file    I2Cchargerhandler.h
+ * @author : Devendu
+ * @brief   File to get battery percentage
+ * @date    25-04-2023
+ */
+
 #ifndef _I2CCHARGERHANDLER_H
 #define _I2CCHARGERHANDLER_H
  
@@ -11,7 +18,6 @@
  
 /**************************************FUNCTION DECLARATIONS****************/
 void InitI2CCharger(void);
-float ReadI2CVoltage(void);
-float ReadI2CTemperature(void); 
+float ReadI2CPMIC(float *pfVolt, float *pfTemp); 
 #endif 
 //EOF 
