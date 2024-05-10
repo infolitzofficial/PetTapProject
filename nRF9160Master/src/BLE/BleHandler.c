@@ -225,8 +225,7 @@ bool SendPayloadToBle()
     _sPacket sPacket = {0};
     float fTempCharger = 0.0; 
     float fVoltcharger=0.00;
-    fVoltcharger= ReadI2CVoltage();
-    fTempCharger= ReadI2CTemperature();
+    ReadI2CPMIC(&fVoltcharger, &fTempCharger);
     psLocationData = GetLocationData();
 
     if (psLocationData)

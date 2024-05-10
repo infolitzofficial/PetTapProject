@@ -571,10 +571,9 @@ bool SendPayload()
     bool bRetVal = false;
     char cPayload[50]; //Location data buffer
     char cATcmd[100]; //AT command buffer 
-    float fTempCharger = 0.0; 
-    float fVoltcharger=0.00;
-    fVoltcharger= ReadI2CVoltage();
-    fTempCharger= ReadI2CTemperature();
+    float fVoltcharger=0.00; 
+    float fTempCharger = 0.0;
+    ReadI2CPMIC(&fVoltcharger, &fTempCharger);
     psLocationData = GetLocationData();
     
 

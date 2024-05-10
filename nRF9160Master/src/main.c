@@ -1296,11 +1296,20 @@ static void SystemTask()
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
-        
-		fVolt = ReadI2CVoltage();
-		fTemp = ReadI2CTemperature();
 
-		printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
+		//ReadI2CPMIC(&fVolt, &fTemp);
+		
+
+        if (fTemp && fVolt) 
+		{
+			printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
+		}
+		else 
+		{
+			printk("WARN : Failed");
+		}
+
+		
 		k_msleep(10);
 
 
