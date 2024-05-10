@@ -18,7 +18,6 @@
  
 /**************************************FUNCTION DECLARATIONS****************/
 void InitI2CCharger(void);
-float ReadI2CVoltage(void);
-float ReadI2CTemperature(void); 
+float ReadI2CPMIC(float *pfVolt, float *pfTemp); 
 #endif 
 //EOF 

@@ -196,7 +196,7 @@ void ProcessDeviceState()
                     DisconnectFromWiFi();
                     StopTimer();
                     WifiStatusFlag = false;                                 
-                    SetWifiStatus(false);                      
+                    SetWifiStatus(false);                    
                     SetDeviceState(WAIT_CONNECTION);                        
                     break;
 

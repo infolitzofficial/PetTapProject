@@ -578,8 +578,8 @@ bool SendPayload()
     MC36XX_acc_t PreAccRaw;
 
     memcpy(&PreAccRaw, GetMC36Data(), sizeof(MC36XX_acc_t));
-    fVoltcharger= ReadI2CVoltage();
-    fTempCharger= ReadI2CTemperature();
+    ReadI2CPMIC(&fVoltcharger, &fTempCharger);
+
     psLocationData = GetLocationData();
     iPetmove=PetMove(PreAccRaw);
 

@@ -1299,16 +1299,24 @@ static void SystemTask()
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
-		 MC36XX_acc_t rawAccel = MC3630readRawAccel();
-        // k_msleep(10); 
-         printk("X axis: %d\n", rawAccel.XAxis);
-        // printk("Y axis: %d\n", rawAccel.YAxis);
-        // printk("Z axis: %d\n", rawAccel.ZAxis);
-		fVolt = ReadI2CVoltage();
-        fTemp = ReadI2CTemperature();
- 
-        printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
-
+    
+    /* Only for testing */
+		MC36XX_acc_t rawAccel = MC3630readRawAccel();
+    // k_msleep(10); 
+    printk("X axis: %d\n", rawAccel.XAxis);
+    // printk("Y axis: %d\n", rawAccel.YAxis);
+    // printk("Z axis: %d\n", rawAccel.ZAxis);
+    
+    /* Uncomment to test */
+		//ReadI2CPMIC(&fVolt, &fTemp);
+    if (fTemp && fVolt) 
+		{
+			printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
+		}
+		else 
+		{
+			printk("WARN : Failed");
+		}
 		k_msleep(10);
 	}
 }
