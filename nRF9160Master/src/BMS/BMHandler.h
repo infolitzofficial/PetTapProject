@@ -1,3 +1,10 @@
+/**
+ * @file    I2Cchargerhandler.h
+ * @author : Devendu
+ * @brief   File to get battery percentage
+ * @date    25-04-2023
+ */
+
 #ifndef _I2CCHARGERHANDLER_H
 #define _I2CCHARGERHANDLER_H
  

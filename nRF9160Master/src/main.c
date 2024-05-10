@@ -19,6 +19,7 @@
 #include "WiFi/WiFiHandler.h"
 #include "System/SystemHandler.h"
 #include "BMS/BMHandler.h"
+#include "MC3630/AccelerometerHandler.h"
 
 // aws
 #include <modem/modem_info.h>
@@ -1025,6 +1026,7 @@ int main(void)
 	InitUart();
 	InitBleUart();
 	InitI2CCharger();
+	GetID3630I2C();
 
 	LOG_INF("Starting GNSS AWS sample");
 
@@ -1271,6 +1273,7 @@ static void SystemTask()
 	int nRetVal = 0;
 	float fVolt = 0.00;
 	float fTemp = 0.00;
+	int iPetmove;
 	
 
 	InitTimerTask();
@@ -1296,11 +1299,17 @@ static void SystemTask()
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();
-
+    
+    /* Only for testing */
+		MC36XX_acc_t rawAccel = MC3630readRawAccel();
+    // k_msleep(10); 
+    printk("X axis: %d\n", rawAccel.XAxis);
+    // printk("Y axis: %d\n", rawAccel.YAxis);
+    // printk("Z axis: %d\n", rawAccel.ZAxis);
+    
+    /* Uncomment to test */
 		//ReadI2CPMIC(&fVolt, &fTemp);
-		
-
-        if (fTemp && fVolt) 
+    if (fTemp && fVolt) 
 		{
 			printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
 		}
@@ -1308,10 +1317,6 @@ static void SystemTask()
 		{
 			printk("WARN : Failed");
 		}
-
-		
 		k_msleep(10);
-
-
 	}
 }

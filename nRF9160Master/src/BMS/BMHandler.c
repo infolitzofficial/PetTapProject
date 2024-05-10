@@ -32,12 +32,9 @@
 
 /************************************GLOBALS**************************/
 
-
-/**********************************FUNCTION DEFINITIONS****************/
-
-
 static const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c3));
 
+/**********************************FUNCTION DEFINITIONS****************/
 
 /**
  * @brief Initializes the I2C charger device.
@@ -114,19 +111,6 @@ float ReadI2CPMIC(float *pfVolt, float *pfTemp)
     }
     
 }
-
-
-/**
- * @brief Reads temperature data from the I2C device.
- *
- * This function reads temperature data from the I2C registers of the device. It combines
- * the high and low bytes to form a 16-bit temperature data and then converts it to degrees
- * Celsius using a conversion factor of 0.125. The temperature value is returned.
- *
- * @return float - Temperature read from the I2C device, in degrees Celsius.
- */
-
-
 
 
  
