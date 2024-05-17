@@ -167,7 +167,7 @@ void ProcessDeviceState()
 
         case WIFI_CONNECTED:
                     printk("INFO: Connected to WiFi\n\r");
-                    StarTimerTask(30);
+                    StarTimerTask(120);
                     SetDeviceState(WIFI_DEVICE);
                     WifiStatusFlag = true;
                     SetWifiStatus(true);

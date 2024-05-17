@@ -573,19 +573,19 @@ bool SendPayload()
     char cPayload[50]; //Location data buffer
     char cATcmd[100]; //AT command buffer 
     float fTempCharger = 0.0; 
-    float fVoltcharger=0.00;
+    uint16_t uPercent= 0;
     int iPetmove=0;
     MC36XX_acc_t PreAccRaw;
 
     memcpy(&PreAccRaw, GetMC36Data(), sizeof(MC36XX_acc_t));
-    ReadI2CPMIC(&fVoltcharger, &fTempCharger);
+    ReadI2CPMIC(&uPercent, &fTempCharger);
 
     psLocationData = GetLocationData();
     iPetmove=PetMove(PreAccRaw);
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f/%.6f/VC:%.2f/TC:%.2f/PetMov:%d", psLocationData->dLatitude, psLocationData->dLongitude, fVoltcharger, fTempCharger,iPetmove);
+        sprintf(cPayload,"%.6f/%.6f/PC:%d%%/TC:%.2f/PetMov:%d", psLocationData->dLatitude, psLocationData->dLongitude, uPercent, fTempCharger,iPetmove);
         printk("sending data: %s\n\r", cPayload);
         sprintf(cATcmd, "AT+AWS=CMD MCU_DATA %d %s %s\r\n", CFG_NUM, CFG_NAME, cPayload);
         print_uart(cATcmd);

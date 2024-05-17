@@ -13,6 +13,7 @@
 #include "zephyr/sys/printk.h"
 #include "../BMS/BMHandler.h"
 #include "../MC3630/AccelerometerHandler.h"
+#include <sys/_stdint.h>
 
 /*******************************************MACROS**********************************************************/
 #define MSG_SIZE        255
@@ -225,19 +226,19 @@ bool SendPayloadToBle()
     char cPayload[PAYLOAD_SIZE];
     _sPacket sPacket = {0};
     float fTempCharger = 0.0; 
-    float fVoltcharger=0.00;
+    uint16_t uPercent= 0;
     int iPetmove=0;
     MC36XX_acc_t PreAccRaw;
 
     memcpy(&PreAccRaw, GetMC36Data(), sizeof(MC36XX_acc_t));
-    ReadI2CPMIC(&fVoltcharger, &fTempCharger);
+    ReadI2CPMIC(&uPercent, &fTempCharger);
 
     psLocationData = GetLocationData();
     iPetmove=PetMove(PreAccRaw);
 
     if (psLocationData)
     {
-        sprintf(cPayload,"%.6f/%.6f/VC:%.2f/TC:%.2f/PetMov:%d", psLocationData->dLatitude, psLocationData->dLongitude, fVoltcharger, fTempCharger,iPetmove);
+        sprintf(cPayload,"%.6f/%.6f/PC:%d%%/TC:%.2f/PetMov:%d", psLocationData->dLatitude, psLocationData->dLongitude, uPercent, fTempCharger,iPetmove);
         printk("sending data: %s\n\r", cPayload);
         BuildPacket(&sPacket, RESP, (uint8_t *)cPayload, strlen(cPayload));
         SendBleMsg(&sPacket, sizeof(_sPacket));

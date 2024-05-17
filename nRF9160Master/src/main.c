@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/_stdint.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <nrf_modem_at.h>
@@ -18,6 +19,7 @@
 #include <date_time.h>
 #include "WiFi/WiFiHandler.h"
 #include "System/SystemHandler.h"
+#include "PacketHandler/PacketHandler.h"
 #include "BMS/BMHandler.h"
 #include "MC3630/AccelerometerHandler.h"
 
@@ -704,6 +706,12 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	char *message;
 	int64_t message_ts = 0;
 	int16_t bat_voltage = 0;
+	float fTempCharger = 0.0; 
+    uint16_t uPercent= 0;
+	int iPetmove=0;
+    MC36XX_acc_t PreAccRaw;
+
+    memcpy(&PreAccRaw, GetMC36Data(), sizeof(MC36XX_acc_t));
 
 	err = date_time_now(&message_ts);
 	if (err) {
@@ -738,12 +746,17 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 		err = 0;
 	}
 
+	ReadI2CPMIC(&uPercent, &fTempCharger);
+	iPetmove=PetMove(PreAccRaw);
 	printf("\n Latitude : %f", pvt_data->latitude);
 	printf("\n Longitude : %f", pvt_data->longitude);
 	//err += json_add_number(reported_obj, "Battery_voltage", bat_voltage);
 	err += json_add_number(reported_obj, "ts", message_ts);
 	err += json_add_number(reported_obj, "latitude", pvt_data->latitude);
 	err += json_add_number(reported_obj, "longitude", pvt_data->longitude);
+	err += json_add_number(reported_obj, "Percentage", uPercent);
+	err += json_add_number(reported_obj, "Temp", fTempCharger);
+	err += json_add_number(reported_obj, "PetMove", iPetmove);
 	//err += json_add_number(reported_obj, "altitude", pvt_data->altitude);
 	err += json_add_number(reported_obj, "flags", pvt_data->flags);
 	//err += json_add_number(reported_obj, "speed", pvt_data->speed);
@@ -892,9 +905,9 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 		 *  FOTA update worked.
 		 */
 		// k_work_submit(&shadow_update_version_work);
- 		create_dummy_gnss(&last_pvt);
+ 		//create_dummy_gnss(&last_pvt);
 						   //print_fix_data(&last_pvt);			
-		shadow_update(&last_pvt);
+		//shadow_update(&last_pvt);
 		/** Start sequential shadow data updates.
 		 */
 		// k_work_schedule(&shadow_update_work,
@@ -1111,6 +1124,7 @@ static void GpsTask()
 	uint8_t count = 0;
 	struct nrf_modem_gnss_nmea_data_frame *nmea_data;
 	_sGnssConfig sGnssConfig = {0};
+	printk("DEBUG: inside GPS TASK \r\n");
 
 	for (;;) {
 		//NRFX_DELAY_US(2000000);
@@ -1160,7 +1174,9 @@ static void GpsTask()
 				}
 				// printf("-----------------------------------\n");
 				// printk("satelite flag %d\n",last_pvt.flags);
+				printk("DEBUG: inside GPS TASk11111111\r\n");
 				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) {
+					printk("DEBUG: GNSS CONNECTED TRUE\r\n");
 					gnss_connected = true;
 					
 					fix_timestamp = k_uptime_get();
@@ -1177,14 +1193,16 @@ static void GpsTask()
 					sGnssConfig.dLongitude = last_pvt.longitude;
 					UpdateLocation(&sGnssConfig);
 					SetLocationDataStatus(true);
-					
+					printk("DEBUG: Location successful\r\n");
 					if(cloud_connected == true && gnss_connected == true)
 					{
+						printk("DEBUG: Connection successful\r\n");
 						shadow_update(&last_pvt);
 					}
 					print_distance_from_reference(&last_pvt);
 				} else {
 					// printk("satelite flag %d\n",last_pvt.flags);
+					printk("DEBUG: inside else>>>>>>>>>>>>\r\n");
 					gnss_connected = false;
 					SetLocationDataStatus(false);
 					//printf("Seconds since last fix: %d\n",
@@ -1194,6 +1212,7 @@ static void GpsTask()
 						  count++;
 					if(cloud_connected == true && (count > post_counter) )
 					{
+						printk("DEBUG: Dummy data send successful\r\n");
 						create_dummy_gnss(&last_pvt);
 						shadow_update(&last_pvt);
 						count = 0;
@@ -1271,7 +1290,7 @@ static void SystemTask()
 {
 
 	int nRetVal = 0;
-	float fVolt = 0.00;
+	uint16_t uPercent = 0;
 	float fTemp = 0.00;
 	int iPetmove;
 	
@@ -1308,15 +1327,17 @@ static void SystemTask()
     // printk("Z axis: %d\n", rawAccel.ZAxis);
     
     /* Uncomment to test */
-		//ReadI2CPMIC(&fVolt, &fTemp);
-    if (fTemp && fVolt) 
+	//ReadI2CPMIC(&uPercent, &fTemp);
+    if (fTemp && uPercent) 
 		{
-			printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
+			printk("percentage Read from PMIC : %d%%, Temp Read from PMIC %f\n", uPercent, fTemp);
 		}
-		else 
+	else 
 		{
 			printk("WARN : Failed");
 		}
-		k_msleep(10);
+
+	k_msleep(10);
+
 	}
 }

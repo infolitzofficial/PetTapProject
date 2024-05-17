@@ -23,6 +23,8 @@
 
 /*******************************************************TYPEDEFS***************************************************/
 
+static bool BleStatusFlag = false;
+
 /*******************************************************PRIVATE VARIABLES******************************************/
 
 /*******************************************************PUBLIC VARIABLES*******************************************/
@@ -76,6 +78,17 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
 
     return bRetVal;
 }
+
+int SetBleStatus (bool flag)
+{
+    bool BleStatusFlag = flag;
+}
+
+bool GetBleStatus()
+{
+    return BleStatusFlag;
+}
+
 
 /**
  * @brief      : Parse packet received
@@ -189,6 +202,8 @@ bool ProcessCmd(char *pcCmd)
 #endif
         if (strcmp(pcCmd, "DISCONNECT") == 0)
         {
+            BleStatusFlag = false;                                 
+            SetBleStatus(false);
             SetDeviceState(WAIT_CONNECTION);
         }
         else if(strcmp(pcCmd, "LOCATION") == 0)
@@ -262,6 +277,8 @@ bool ProcessResp(char *pcResp)
     {
         if (strcmp(pcResp, "ACK") == 0)
         {
+            BleStatusFlag = true;
+            SetBleStatus(true);
             UpdateStateAfterResponse(true);
         }
         else if (strcmp(pcResp, "NACK") == 0)

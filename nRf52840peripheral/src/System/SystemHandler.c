@@ -12,12 +12,14 @@
 #include "../UartHandler/UartHandler.h"
 #include "../BLE/BleHandler.h"
 #include "../BLE/BleService.h"
+#include "zephyr/sys_clock.h"
 
 /*******************************************MACROS**********************************************************/
 
 
 /******************************************TYPEDEFS*********************************************************/
 static _eDevState DevState = BLE_IDLE;
+static long long llSysTick = 0;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
@@ -48,6 +50,7 @@ void ProcessDeviceState()
 {
     _sPacket sPacket = {0};
     uint8_t ucPayload[255];
+    long long llCurrentTick = 0;
 
     switch(DevState)
     {
@@ -74,9 +77,14 @@ void ProcessDeviceState()
         case BLE_CONNECTED:
                     if (IsNotificationenabled())
                     {
-                        strcpy((char *)ucPayload, "LOCATION");
-                        BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
-                        SendData((uint8_t *)&sPacket, sizeof(sPacket));
+                        llCurrentTick = sys_clock_tick_get();
+                        if ((llCurrentTick - llSysTick) >= (30 * 32768))
+                        {
+                                strcpy((char *)ucPayload, "LOCATION");
+                                BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
+                                SendData((uint8_t *)&sPacket, sizeof(sPacket));
+                                llSysTick = llCurrentTick;
+                        }
                     }
                     break;
 
