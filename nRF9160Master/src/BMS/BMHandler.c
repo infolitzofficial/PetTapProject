@@ -24,12 +24,10 @@
 #define CHARGER2_14_BITS_RESOLUTION       0x00
 #define CHARGER2_OPERATING_MODE           0x10
 #define SLAVE_ADDRESS                     0x70
-#define RegCurrentLowByte                 0x06
-#define RegCurrentHighByte                0x07
-#define RegVoltageLowByte                 0x08
-#define RegVoltageHighByte                0x09
-#define RegTemperatureLowByte             0x10
-#define RegTemperatureHighByte            0x11
+#define REG_VOLTAGE_LOWBYTE               0x08
+#define REG_VOLTAGE_HIGHBYTE              0x09
+#define REG_TEMPERATURE_LOWBYTE           0x10
+#define REG_TEMPERATURE_HIGHBYTE          0x11
 
 
 /************************************GLOBALS**************************/
@@ -75,8 +73,8 @@ void InitI2CCharger(void)
  {
     float fMaxVolt = 3.3;
     float fMinVolt = 2.9;
+    float fTemp = 0.00;
     uint8_t ucVData1 = 0;
-    uint16_t usVData = 0;
     int16_t sTData = 0;
     uint8_t ucData[4];
 
@@ -87,7 +85,7 @@ void InitI2CCharger(void)
         ucVData1 = 0;
 
         // Read voltage and temperature data from I2C registers
-        i2c_burst_read(i2c_dev, SLAVE_ADDRESS, RegVoltageLowByte, ucData, sizeof(ucData));
+        i2c_burst_read(i2c_dev, SLAVE_ADDRESS, REG_VOLTAGE_LOWBYTE, ucData, sizeof(ucData));
 
         for (uint8_t i = 0; i < sizeof(ucData); i++) 
         {
@@ -97,13 +95,14 @@ void InitI2CCharger(void)
 
 
         // Combine high and low bytes to form 16-bit voltage data
-        usVData = ((uint16_t)ucData[1] << 8) | ucData[0];
+         fTemp = ((uint16_t)ucData[1] << 8) | ucData[0];
 
         // Convert voltage data to volts (assuming a conversion factor of 2.44)
-        usVData = (usVData * 2.44) / 1000.0;
-        printk("PMIC voltage : %d\n\r", usVData);
+        fTemp = (fTemp * 2.44) / 1000.0;
+        printk("PMIC voltage : %f\n\r", fTemp);
 
-        *puPercent = ((usVData - fMinVolt) / (fMaxVolt - fMinVolt)) * 100;
+        //convert voltage to percentage
+        *puPercent = ((fTemp - fMinVolt) / (fMaxVolt - fMinVolt)) * 100;
 
 
         // Combine high and low bytes to form 16-bit temperature data

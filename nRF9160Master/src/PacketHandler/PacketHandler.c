@@ -202,25 +202,36 @@ bool ProcessCmd(char *pcCmd)
 #endif
         if (strcmp(pcCmd, "DISCONNECT") == 0)
         {
-            BleStatusFlag = false;                                 
-            SetBleStatus(false);
-            SetDeviceState(WAIT_CONNECTION);
+            if(IsWiFiConnected())
+            {
+                SetDeviceState(WIFI_DEVICE);
+            }
+            else 
+            {
+                SetDeviceState(WAIT_CONNECTION);
+            }
+            
         }
         else if(strcmp(pcCmd, "LOCATION") == 0)
         {
-            if (IsLocationDataOK())    //wifi disconnected      
-            {
-                printk("DEBUG: inside proccescmd");
-                if(!WifiStatus)
-                {
-                    printk("DEBUG: inside WifiStatus ");
-                    SendPayloadToBle();
-                }
+            // if (IsLocationDataOK())    //wifi disconnected      
+            // {
+            //     printk("DEBUG: inside proccescmd");
+            //     if(!WifiStatus)
+            //     {
+            //         printk("DEBUG: inside WifiStatus ");
+            //         SendPayloadToBle();
+            //     }
                 
-            }
-            else
+            // }
+            // else
+            // {
+            //     printk("Didnt get location fix\n\r");
+            // }
+
+            if (!WifiStatus) 
             {
-                printk("Didnt get location fix\n\r");
+                SetDeviceState(BLE_CONNECTED);
             }
         }
         else if(strstr(pcCmd, "ssid") != NULL)
@@ -242,19 +253,39 @@ bool ProcessCmd(char *pcCmd)
 static void UpdateStateAfterResponse(bool bStatus)
 {
     _eDevState *pDevState = 0;
+    bool WifiStatus = false;
 
     pDevState = GetDeviceState();
+    WifiStatus    = GetWifiStatus();
 
     switch(*pDevState)
     {
         case WAIT_CONNECTION:
                             if (bStatus)
                             {
-                                SetDeviceState(BLE_CONNECTED);
+                                BleStatusFlag = true;
+                                SetBleStatus(true);
+                                printk("DEBUG : flag true???????????\n\r");
+                                if (!WifiStatus) 
+                                {
+                                    SetDeviceState(BLE_CONNECTED);
+                                }
+                                //SetDeviceState(BLE_CONNECTED);
                             }
                             else
                             {
-                                SetDeviceState(WAIT_CONNECTION);
+                                BleStatusFlag = false;                                 
+                                SetBleStatus(false);
+                                printk("DEBUG : flag false???????????\n\r");
+                                if(IsWiFiConnected())
+                                {
+                                   SetDeviceState(WIFI_DEVICE); 
+                                }
+                                else
+                                {
+                                    SetDeviceState(WAIT_CONNECTION);
+                                }
+                               
                             }
                             break;
 
@@ -277,8 +308,6 @@ bool ProcessResp(char *pcResp)
     {
         if (strcmp(pcResp, "ACK") == 0)
         {
-            BleStatusFlag = true;
-            SetBleStatus(true);
             UpdateStateAfterResponse(true);
         }
         else if (strcmp(pcResp, "NACK") == 0)

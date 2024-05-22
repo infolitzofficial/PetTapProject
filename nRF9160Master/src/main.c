@@ -45,6 +45,7 @@ static struct k_work_delayable connect_work;
 
 static bool cloud_connected = false;
 static bool gnss_connected = false;
+static long long llSysTick = 0;
 
 static void GpsTask(void);
 static void SystemTask(void);
@@ -1122,6 +1123,9 @@ static void GpsTask()
 {
 	uint8_t cnt = 0;
 	uint8_t count = 0;
+	bool WifiStatus = false;
+	bool BleStatus = false;
+	long long llCurrentTick = 0;
 	struct nrf_modem_gnss_nmea_data_frame *nmea_data;
 	_sGnssConfig sGnssConfig = {0};
 	printk("DEBUG: inside GPS TASK \r\n");
@@ -1174,8 +1178,19 @@ static void GpsTask()
 				}
 				// printf("-----------------------------------\n");
 				// printk("satelite flag %d\n",last_pvt.flags);
-				printk("DEBUG: inside GPS TASk11111111\r\n");
-				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) {
+				//printk("DEBUG: inside GPS TASk11111111\r\n");
+				// WifiStatus    = GetWifiStatus();
+				// BleStatus     = GetBleStatus();
+				// printk("BLE flag : %d WIFI flag : %d \n", BleStatus , WifiStatus);
+				// llCurrentTick = sys_clock_tick_get();
+                // if ((llCurrentTick - llSysTick) >= (10 * 32768))
+				// {
+				// if(!(WifiStatus || BleStatus))
+				// {
+				// printk("DEBUG: inside GPS TASk11111111\r\n");
+				// llSysTick = llCurrentTick;
+				if (last_pvt.flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) 
+				{
 					printk("DEBUG: GNSS CONNECTED TRUE\r\n");
 					gnss_connected = true;
 					
@@ -1194,13 +1209,24 @@ static void GpsTask()
 					UpdateLocation(&sGnssConfig);
 					SetLocationDataStatus(true);
 					printk("DEBUG: Location successful\r\n");
-					if(cloud_connected == true && gnss_connected == true)
+					WifiStatus    = GetWifiStatus();
+					BleStatus     = GetBleStatus();
+					printk("BLE flag : %d WIFI flag : %d \r\n", BleStatus , WifiStatus);
+					if(!(WifiStatus || BleStatus ))
 					{
-						printk("DEBUG: Connection successful\r\n");
-						shadow_update(&last_pvt);
+						//printk("BLE flag : %d WIFI flag : %d \n", BleStatus , WifiStatus);
+						printk("DEBUG: Inside wifstatus>>>>>>>>\r\n");
+						if(cloud_connected == true && gnss_connected == true)
+						{
+							printk("DEBUG: Connection successful\r\n");
+							shadow_update(&last_pvt);
+						}
 					}
 					print_distance_from_reference(&last_pvt);
-				} else {
+				}
+				
+				
+				 else {
 					// printk("satelite flag %d\n",last_pvt.flags);
 					printk("DEBUG: inside else>>>>>>>>>>>>\r\n");
 					gnss_connected = false;
@@ -1315,6 +1341,7 @@ static void SystemTask()
 #endif
 	while (1)
 	{   
+
 		ProcessWiFiMsgs();
 		ProcessBleMsg();
 		ProcessDeviceState();

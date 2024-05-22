@@ -77,14 +77,14 @@ void ProcessDeviceState()
         case BLE_CONNECTED:
                     if (IsNotificationenabled())
                     {
-                        llCurrentTick = sys_clock_tick_get();
-                        if ((llCurrentTick - llSysTick) >= (30 * 32768))
-                        {
+                        // llCurrentTick = sys_clock_tick_get();
+                        // if ((llCurrentTick - llSysTick) >= (30 * 32768))
+                        // {
                                 strcpy((char *)ucPayload, "LOCATION");
                                 BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
                                 SendData((uint8_t *)&sPacket, sizeof(sPacket));
                                 llSysTick = llCurrentTick;
-                        }
+                        //}
                     }
                     break;
 
