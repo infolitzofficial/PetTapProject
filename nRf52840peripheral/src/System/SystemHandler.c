@@ -12,6 +12,7 @@
 #include "../UartHandler/UartHandler.h"
 #include "../BLE/BleHandler.h"
 #include "../BLE/BleService.h"
+#include "zephyr/sys_clock.h"
 
 /*******************************************MACROS**********************************************************/
 
@@ -48,7 +49,6 @@ void ProcessDeviceState()
 {
     _sPacket sPacket = {0};
     uint8_t ucPayload[255];
-
     switch(DevState)
     {
         case BLE_IDLE:
@@ -76,7 +76,7 @@ void ProcessDeviceState()
                     {
                         strcpy((char *)ucPayload, "LOCATION");
                         BuildPacket(&sPacket, CMD, ucPayload, strlen((char *)ucPayload));
-                        SendData((uint8_t *)&sPacket, sizeof(sPacket));
+                        SendData((uint8_t *)&sPacket, sizeof(sPacket));    
                     }
                     break;
 

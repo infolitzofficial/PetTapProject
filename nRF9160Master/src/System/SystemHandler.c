@@ -13,6 +13,7 @@
 #include "../NVS/NvsHandler.h"
 #include "zephyr/sys/printk.h"
 #include <sys/_stdint.h>
+#include "../BLE/BleHandler.h"
 
 /*******************************************MACROS**********************************************************/
 #define BUFFER_SIZE     255
@@ -26,6 +27,7 @@ static bool TimerExpired = false;
 static long long llSysTick = 0;
 static uint8_t uCredIdx = 0;
 static bool WifiStatusFlag = false;
+static bool bTimerRunning = false;
 
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
@@ -53,7 +55,7 @@ static bool ConnectToBLE()
 
 int SetWifiStatus (bool flag)
 {
-    bool WifiStatusFlag = flag;
+     WifiStatusFlag = flag;
 }
 
 bool GetWifiStatus()
@@ -103,6 +105,9 @@ void ProcessDeviceState()
     psConfigData = GetConfigData();
 #endif
     psAtCmdHndler = GetATCmdHandle();
+
+    bool NotifyStatus = false;
+    NotifyStatus = GetNotifyStatus();
 
     switch(DevState)
     {
@@ -162,12 +167,20 @@ void ProcessDeviceState()
                     }
 
                     printk("INFO: waiting connection\n\r");
+                    //WifiStatusFlag = false; 
                     k_msleep(500);
                     break;
 
         case WIFI_CONNECTED:
                     printk("INFO: Connected to WiFi\n\r");
-                    StarTimerTask(30);
+
+                    if (bTimerRunning) 
+                    {
+                        StopTimer();
+                    }
+                    
+                    StarTimerTask(120);
+                    
                     SetDeviceState(WIFI_DEVICE);
                     WifiStatusFlag = true;
                     SetWifiStatus(true);
@@ -202,11 +215,39 @@ void ProcessDeviceState()
 
         case BLE_CONNECTED:
                     printk("INFO: Connected to BLE\n\r");
+                    if (bTimerRunning) 
+                    {
+                        if(!WifiStatusFlag)
+                        {
+                            StopTimer();
+                            StarTimerTask(30);
+                        }
+                    }
+                    else
+                    {
+                        StarTimerTask(30);
+                    }
                     SetDeviceState(BLE_DEVICE);
                     break;
 
         case BLE_DEVICE:
-                    //No Operation
+                    printk("INFO: BLE DEVICE\n\r");
+                    if (TimerExpired)
+                    {   
+                        if (IsLocationDataOK())
+                        {
+                            if(NotifyStatus)
+                            {
+                                if (SendPayloadToBle())
+                                {
+                                    printk("INFO: Location sent success to BLE\n\r");
+                                    TimerExpired=false;
+                                }
+                            }
+                        }                 
+                    }
+
+                    
                     break;
 
         default        :
@@ -305,7 +346,9 @@ static void TimerExpiredCb(struct k_timer *timer)
                             TimerExpired = true;
                             break;
 
-        case BLE_DEVICE  :  
+        case BLE_DEVICE  : 
+                            printk("INFO : TimerExpired Callback from BLE\n\r");
+                            TimerExpired = true;
                             break;
 
         default          :
@@ -338,6 +381,7 @@ void InitTimerTask()
 
 void StarTimerTask(int nPeriod)
 {
+    bTimerRunning = true;
     k_timer_start(&Timer, K_SECONDS(0), K_SECONDS(nPeriod));
 }
 
@@ -349,6 +393,7 @@ void StarTimerTask(int nPeriod)
 */
 void StopTimer()
 {
+    bTimerRunning = false;
     k_timer_stop(&Timer);
 }
 

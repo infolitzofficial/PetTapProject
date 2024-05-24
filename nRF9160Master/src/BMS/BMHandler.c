@@ -24,10 +24,10 @@
 #define CHARGER2_14_BITS_RESOLUTION       0x00
 #define CHARGER2_OPERATING_MODE           0x10
 #define SLAVE_ADDRESS                     0x70
-#define RegVoltageLowByte                 0x08
-#define RegVoltageHighByte                0x09
-#define RegTemperatureLowByte             0x10
-#define RegTemperatureHighByte            0x11
+#define REG_VOLTAGE_LOWBYTE               0x08
+#define REG_VOLTAGE_HIGHBYTE              0x09
+#define REG_TEMPERATURE_LOWBYTE           0x10
+#define REG_TEMPERATURE_HIGHBYTE          0x11
 
 
 /************************************GLOBALS**************************/
@@ -69,10 +69,12 @@ void InitI2CCharger(void)
  * @return float - Voltage read from the I2C device, in volts.
  */
 
-float ReadI2CPMIC(float *pfVolt, float *pfTemp)
+ float ReadI2CPMIC(uint16_t *puPercent, float *pfTemp)
  {
+    float fMaxVolt = 3.3;
+    float fMinVolt = 2.9;
+    float fTemp = 0.00;
     uint8_t ucVData1 = 0;
-    uint16_t usVData = 0;
     int16_t sTData = 0;
     uint8_t ucData[4];
 
@@ -83,7 +85,7 @@ float ReadI2CPMIC(float *pfVolt, float *pfTemp)
         ucVData1 = 0;
 
         // Read voltage and temperature data from I2C registers
-        i2c_burst_read(i2c_dev, SLAVE_ADDRESS, RegVoltageLowByte, ucData, sizeof(ucData));
+        i2c_burst_read(i2c_dev, SLAVE_ADDRESS, REG_VOLTAGE_LOWBYTE, ucData, sizeof(ucData));
 
         for (uint8_t i = 0; i < sizeof(ucData); i++) 
         {
@@ -91,11 +93,17 @@ float ReadI2CPMIC(float *pfVolt, float *pfTemp)
         }
         printk("\n");
 
+
         // Combine high and low bytes to form 16-bit voltage data
-        usVData = ((uint16_t)ucData[1] << 8) | ucData[0];
+         fTemp = ((uint16_t)ucData[1] << 8) | ucData[0];
 
         // Convert voltage data to volts (assuming a conversion factor of 2.44)
-        *pfVolt = (usVData * 2.44) / 1000.0;
+        fTemp = (fTemp * 2.44) / 1000.0;
+        printk("PMIC voltage : %f\n\r", fTemp);
+
+        //convert voltage to percentage
+        *puPercent = ((fTemp - fMinVolt) / (fMaxVolt - fMinVolt)) * 100;
+
 
         // Combine high and low bytes to form 16-bit temperature data
         sTData = ((int16_t)ucData[3] << 8) | ucData[2];
@@ -112,5 +120,3 @@ float ReadI2CPMIC(float *pfVolt, float *pfTemp)
     
 }
 
-
- 

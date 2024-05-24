@@ -23,6 +23,9 @@
 
 /*******************************************************TYPEDEFS***************************************************/
 
+static bool BleStatusFlag = false;
+static bool NotifyStatusFlag = false;
+
 /*******************************************************PRIVATE VARIABLES******************************************/
 
 /*******************************************************PUBLIC VARIABLES*******************************************/
@@ -76,6 +79,41 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
 
     return bRetVal;
 }
+
+/**
+ * @brief       : Check if BLE is connected 
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
+*/
+
+void SetBleStatus (bool flag)
+{
+    BleStatusFlag = flag;
+}
+
+bool GetBleStatus()
+{
+    return BleStatusFlag;
+}
+
+/**
+ * @brief       : Check Notify is enabled
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
+*/
+
+void SetNotifyStatus (bool flag)
+{
+    NotifyStatusFlag = flag;
+}
+
+bool GetNotifyStatus()
+{
+    return NotifyStatusFlag;
+}
+
 
 /**
  * @brief      : Parse packet received
@@ -170,12 +208,12 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
 bool ProcessCmd(char *pcCmd)
 {
     bool bRetVal = false;
-    bool WifiStatus = false;
     char cBuffer[80] = {0};
     _sAtCmdHandle *psAtCmdHndler = NULL;
+    _eDevState *peDeviceState = NULL;
     
     psAtCmdHndler = GetATCmdHandle();
-    WifiStatus    = GetWifiStatus();
+    peDeviceState = GetDeviceState();
 
 
      if (pcCmd)
@@ -189,24 +227,24 @@ bool ProcessCmd(char *pcCmd)
 #endif
         if (strcmp(pcCmd, "DISCONNECT") == 0)
         {
-            SetDeviceState(WAIT_CONNECTION);
+            NotifyStatusFlag = false;
+            
+
+            if(IsWiFiConnected())
+            {
+                SetDeviceState(WIFI_DEVICE);
+            }
+            else 
+            {
+                SetDeviceState(WAIT_CONNECTION);
+            }
+            
         }
         else if(strcmp(pcCmd, "LOCATION") == 0)
         {
-            if (IsLocationDataOK())    //wifi disconnected      
-            {
-                printk("DEBUG: inside proccescmd");
-                if(!WifiStatus)
-                {
-                    printk("DEBUG: inside WifiStatus ");
-                    SendPayloadToBle();
-                }
-                
-            }
-            else
-            {
-                printk("Didnt get location fix\n\r");
-            }
+            
+            NotifyStatusFlag = true;
+               
         }
         else if(strstr(pcCmd, "ssid") != NULL)
         {
@@ -227,19 +265,39 @@ bool ProcessCmd(char *pcCmd)
 static void UpdateStateAfterResponse(bool bStatus)
 {
     _eDevState *pDevState = 0;
+    bool WifiStatus = false;
 
     pDevState = GetDeviceState();
+    WifiStatus    = GetWifiStatus();
 
     switch(*pDevState)
     {
         case WAIT_CONNECTION:
                             if (bStatus)
                             {
-                                SetDeviceState(BLE_CONNECTED);
+                                BleStatusFlag = true;
+                                SetBleStatus(true);
+                                printk("DEBUG : flag true???????????\n\r");
+                                if (!IsWiFiConnected()) 
+                                {
+                                    SetDeviceState(BLE_CONNECTED);
+                                }
+                                
                             }
                             else
                             {
-                                SetDeviceState(WAIT_CONNECTION);
+                                BleStatusFlag = false;                                 
+                                SetBleStatus(false);
+                                printk("DEBUG : flag false???????????\n\r");
+                                if(IsWiFiConnected())
+                                {
+                                   SetDeviceState(WIFI_DEVICE); 
+                                }
+                                else
+                                {
+                                    SetDeviceState(WAIT_CONNECTION);
+                                }
+                               
                             }
                             break;
 
