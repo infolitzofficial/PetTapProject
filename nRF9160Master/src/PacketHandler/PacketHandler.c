@@ -24,6 +24,7 @@
 /*******************************************************TYPEDEFS***************************************************/
 
 static bool BleStatusFlag = false;
+static bool NotifyStatusFlag = false;
 
 /*******************************************************PRIVATE VARIABLES******************************************/
 
@@ -79,14 +80,38 @@ bool ParsePacket(uint8_t *pucRcvdBuffer, _sPacket *psPacket)
     return bRetVal;
 }
 
-int SetBleStatus (bool flag)
+/**
+ * @brief       : Check if BLE is connected 
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
+*/
+
+void SetBleStatus (bool flag)
 {
-    bool BleStatusFlag = flag;
+    BleStatusFlag = flag;
 }
 
 bool GetBleStatus()
 {
     return BleStatusFlag;
+}
+
+/**
+ * @brief       : Check Notify is enabled
+ * @param [in]  : None
+ * @param [out] : None
+ * @return      : true for success
+*/
+
+void SetNotifyStatus (bool flag)
+{
+    NotifyStatusFlag = flag;
+}
+
+bool GetNotifyStatus()
+{
+    return NotifyStatusFlag;
 }
 
 
@@ -183,12 +208,12 @@ void parseWifiCred(const char *pcCmd, char *pcCredential)
 bool ProcessCmd(char *pcCmd)
 {
     bool bRetVal = false;
-    bool WifiStatus = false;
     char cBuffer[80] = {0};
     _sAtCmdHandle *psAtCmdHndler = NULL;
+    _eDevState *peDeviceState = NULL;
     
     psAtCmdHndler = GetATCmdHandle();
-    WifiStatus    = GetWifiStatus();
+    peDeviceState = GetDeviceState();
 
 
      if (pcCmd)
@@ -202,6 +227,9 @@ bool ProcessCmd(char *pcCmd)
 #endif
         if (strcmp(pcCmd, "DISCONNECT") == 0)
         {
+            NotifyStatusFlag = false;
+            
+
             if(IsWiFiConnected())
             {
                 SetDeviceState(WIFI_DEVICE);
@@ -214,25 +242,9 @@ bool ProcessCmd(char *pcCmd)
         }
         else if(strcmp(pcCmd, "LOCATION") == 0)
         {
-            // if (IsLocationDataOK())    //wifi disconnected      
-            // {
-            //     printk("DEBUG: inside proccescmd");
-            //     if(!WifiStatus)
-            //     {
-            //         printk("DEBUG: inside WifiStatus ");
-            //         SendPayloadToBle();
-            //     }
-                
-            // }
-            // else
-            // {
-            //     printk("Didnt get location fix\n\r");
-            // }
-
-            if (!WifiStatus) 
-            {
-                SetDeviceState(BLE_CONNECTED);
-            }
+            
+            NotifyStatusFlag = true;
+               
         }
         else if(strstr(pcCmd, "ssid") != NULL)
         {
@@ -266,11 +278,11 @@ static void UpdateStateAfterResponse(bool bStatus)
                                 BleStatusFlag = true;
                                 SetBleStatus(true);
                                 printk("DEBUG : flag true???????????\n\r");
-                                if (!WifiStatus) 
+                                if (!IsWiFiConnected()) 
                                 {
                                     SetDeviceState(BLE_CONNECTED);
                                 }
-                                //SetDeviceState(BLE_CONNECTED);
+                                
                             }
                             else
                             {

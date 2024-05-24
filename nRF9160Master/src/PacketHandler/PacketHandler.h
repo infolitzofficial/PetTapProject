@@ -49,8 +49,11 @@ bool ProcessResp(char *pcResp);
 bool ProcessPayload(char *pcPayload);
 void parseWifiCred(const char *pcCmd, char *pcCredential);
 int WriteCredToFlash();
-int SetBleStatus (bool flag);
+void SetBleStatus (bool flag);
 bool GetBleStatus();
+void SetNotifyStatus (bool flag);
+bool GetNotifyStatus();
+
 #endif
 
 //EOF

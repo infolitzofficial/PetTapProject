@@ -55,7 +55,7 @@ static bool ConnectToBLE()
 
 int SetWifiStatus (bool flag)
 {
-    bool WifiStatusFlag = flag;
+     WifiStatusFlag = flag;
 }
 
 bool GetWifiStatus()
@@ -105,6 +105,9 @@ void ProcessDeviceState()
     psConfigData = GetConfigData();
 #endif
     psAtCmdHndler = GetATCmdHandle();
+
+    bool NotifyStatus = false;
+    NotifyStatus = GetNotifyStatus();
 
     switch(DevState)
     {
@@ -233,10 +236,13 @@ void ProcessDeviceState()
                     {   
                         if (IsLocationDataOK())
                         {
-                            if (SendPayloadToBle())
+                            if(NotifyStatus)
                             {
-                                printk("INFO: Location sent success\n\r");
-                                TimerExpired=false;
+                                if (SendPayloadToBle())
+                                {
+                                    printk("INFO: Location sent success to BLE\n\r");
+                                    TimerExpired=false;
+                                }
                             }
                         }                 
                     }
