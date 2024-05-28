@@ -31,9 +31,17 @@
 
 /****************************************TypeDefs******************************************/
 
+typedef struct __attribute__((packed)) __sConfigTimes
+{
+    uint16_t usWifiTimeout;
+    uint16_t usBleTimeout;
+    uint16_t usLteTimeout;
+}_sConfigTimes;
+
 typedef struct __attribute__((packed)) __sConfigData
 {
     _sWifiCred sWifiCred;
+    _sConfigTimes sConfigTimes;
     bool bWifiStatus;
     bool bCredAddStatus;
 }_sConfigData;

@@ -14,11 +14,11 @@ static struct nvs_fs sNvsFileSystem = {0};
 
 static _sConfigData 
 sConfigData[5] = {
-    {{"Alcodex", "Adx@2013"}, true, true},
-    {{0, 0}, false, false},
-    {{0, 0}, false, false},
-    {{0, 0}, false, false},
-    {{0, 0}, false, false},
+    {{"Alcodex", "Adx@2013"},{10,20,30}, true, true},
+    {{0, 0}, {0,0,0},false, false},
+    {{0, 0}, {0,0,0},false, false},
+    {{0, 0}, {0,0,0},false, false},
+    {{0, 0}, {0,0,0},false, false},
 };
 
 

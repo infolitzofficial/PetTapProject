@@ -14,6 +14,7 @@
 #include <ssp/string.h>
 #include <string.h>
 #include <sys/_stdint.h>
+#include <stdlib.h>
 
 
 #include "../NVS/NvsHandler.h"
@@ -26,8 +27,8 @@
 static bool BleStatusFlag = false;
 static bool NotifyStatusFlag = false;
 
-/*******************************************************PRIVATE VARIABLES******************************************/
-
+/*******************************************************PRIVATE PROTOTYPES******************************************/
+static void ParseConfigTimes(char *pcCmd, _sConfigData *psConfigData);
 /*******************************************************PUBLIC VARIABLES*******************************************/
 
 /*******************************************************FUNCTION DEFINITION*****************************************/
@@ -211,7 +212,9 @@ bool ProcessCmd(char *pcCmd)
     char cBuffer[80] = {0};
     _sAtCmdHandle *psAtCmdHndler = NULL;
     _eDevState *peDeviceState = NULL;
+    _sConfigData *psConfigData = NULL;
     
+    psConfigData = GetConfigData();
     psAtCmdHndler = GetATCmdHandle();
     peDeviceState = GetDeviceState();
 
@@ -258,6 +261,12 @@ bool ProcessCmd(char *pcCmd)
             k_msleep(100);
             //bRetVal = ProcessWiFiMsgs_NVS();
             //SetDeviceState(DEV_IDLE);
+        }
+        else if (strstr(pcCmd, "Time") != NULL) 
+        {
+            printk("DEBUG : Configured Time %s\n",pcCmd);
+            ParseConfigTimes(pcCmd, psConfigData);
+            WriteCredToFlash();
         }
     }
 }
@@ -366,6 +375,8 @@ int WriteCredToFlash()
     memcpy(sConfigData, psConfigData, sizeof(_sConfigData) * 5);
     printk("DEBUG : Config Data SSID %s\n", sConfigData[1].sWifiCred.ucSsid);
     nRetVal = NvsWrite((uint8_t *)sConfigData, sizeof(_sConfigData) * 5, CONFIG_IDX);
+    printk("DEBUG : nRetVal>>>>>>>>>>>> %d\n", nRetVal );
+
 
     if (nRetVal == (sizeof(_sConfigData) * 5)) 
     {
@@ -373,6 +384,9 @@ int WriteCredToFlash()
 
         nRetVal = NvsRead(uReadBuf, sizeof(_sConfigData) * 5 , CONFIG_IDX); 
         memcpy(psConfigData, (_sConfigData *)uReadBuf, sizeof(_sConfigData) * 5);
+            printk("DEBUG : WIFI Timeout : %d\n", psConfigData[0].sConfigTimes.usWifiTimeout);
+            printk("DEBUG : BLE Timeout : %d\n", psConfigData[0].sConfigTimes.usBleTimeout);
+            printk("DEBUG : LTE Timeout : %d\n", psConfigData[0].sConfigTimes.usLteTimeout);
         for (uCredentialIdx = 0;uCredentialIdx < 5; uCredentialIdx++) 
         {
             if (psConfigData[uCredentialIdx].bCredAddStatus == true) 
@@ -394,6 +408,28 @@ int WriteCredToFlash()
 #endif
 
     return nRetVal;
+}
+
+static void ParseConfigTimes(char *pcCmd, _sConfigData *psConfigData)
+{
+    char *pcToken;
+    uint16_t usTimings[3];
+    int i = 0;
+
+    pcToken = strtok(pcCmd, "{}, ");
+
+    while (pcToken != NULL) 
+    {
+        if (isdigit(*pcToken)) 
+        {
+            usTimings[i++] = atoi(pcToken);
+        }
+        pcToken = strtok(NULL, "{}, ");
+    }
+
+    psConfigData[0].sConfigTimes.usWifiTimeout= usTimings[0];
+    psConfigData[0].sConfigTimes.usBleTimeout = usTimings[1];
+    psConfigData[0].sConfigTimes.usLteTimeout = usTimings[2]; 
 }
 
 //EOF

@@ -114,6 +114,7 @@ void ProcessDeviceState()
         case DEV_IDLE:
                     //Perform Configuration
                     printk("INFO: IDLE STATE\n\r");
+                    
                     llSysTick = sys_clock_tick_get();
 
                     do
@@ -134,6 +135,7 @@ void ProcessDeviceState()
 
         case WAIT_CONNECTION:
                     printk("Info: Sending connection request to BLE\n\r");
+                    
                     llCurrentTick = sys_clock_tick_get();
                     if (ConnectToBLE())
                     {
@@ -178,8 +180,9 @@ void ProcessDeviceState()
                     {
                         StopTimer();
                     }
+                    printk("DEBUG : WIFI Timeout : %d\n", psConfigData[0].sConfigTimes.usWifiTimeout);
                     
-                    StarTimerTask(120);
+                    StarTimerTask( (int)psConfigData[0].sConfigTimes.usWifiTimeout);
                     
                     SetDeviceState(WIFI_DEVICE);
                     WifiStatusFlag = true;

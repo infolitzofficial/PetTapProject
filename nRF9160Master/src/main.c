@@ -1281,6 +1281,9 @@ static bool CheckForConfig()
 	{
 		memcpy(psConfigData, (_sConfigData *)uReadBuf, sizeof(_sConfigData) * 5);
 
+		printk("DEBUG : WIFI Timeout : %d\n", psConfigData[0].sConfigTimes.usWifiTimeout);
+		printk("DEBUG : BLE Timeout : %d\n", psConfigData[0].sConfigTimes.usBleTimeout);
+		printk("DEBUG : LTE Timeout : %d\n", psConfigData[0].sConfigTimes.usLteTimeout);
 		uCredentialIdx = CheckLastConnectedStatus();
 		sprintf(uReadBuf, "%s,%s", psConfigData[uCredentialIdx].sWifiCred.ucSsid, psConfigData[uCredentialIdx].sWifiCred.ucPwd);
 		SetAPCredentials(uReadBuf);
