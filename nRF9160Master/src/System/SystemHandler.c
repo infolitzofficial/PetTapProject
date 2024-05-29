@@ -180,7 +180,7 @@ void ProcessDeviceState()
                     {
                         StopTimer();
                     }
-                    printk("DEBUG : WIFI Timeout : %d\n", psConfigData[0].sConfigTimes.usWifiTimeout);
+                    printk("DEBUG : WIFI Timeout>>>>>>> : %d\n", psConfigData[0].sConfigTimes.usWifiTimeout);
                     
                     StarTimerTask( (int)psConfigData[0].sConfigTimes.usWifiTimeout);
                     
@@ -223,12 +223,15 @@ void ProcessDeviceState()
                         if(!WifiStatusFlag)
                         {
                             StopTimer();
-                            StarTimerTask(30);
+                            printk("DEBUG : BLE Timeout>>>>> : %d\n", psConfigData[0].sConfigTimes.usBleTimeout);
+
+                            StarTimerTask((int)psConfigData[0].sConfigTimes.usBleTimeout);
                         }
                     }
                     else
                     {
-                        StarTimerTask(30);
+                        printk("DEBUG :BLUETOOTH Timeout : %d\n", psConfigData[0].sConfigTimes.usBleTimeout);
+                        StarTimerTask((int)psConfigData[0].sConfigTimes.usBleTimeout);
                     }
                     SetDeviceState(BLE_DEVICE);
                     break;

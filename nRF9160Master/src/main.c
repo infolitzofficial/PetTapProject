@@ -1128,6 +1128,8 @@ static void GpsTask()
 	long long llCurrentTick = 0;
 	struct nrf_modem_gnss_nmea_data_frame *nmea_data;
 	_sGnssConfig sGnssConfig = {0};
+	_sConfigData *psConfigData = NULL;
+	psConfigData = GetConfigData();
 	printk("DEBUG: inside GPS TASK \r\n");
 
 	for (;;) {
@@ -1204,8 +1206,9 @@ static void GpsTask()
 					printk("BLE flag : %d WIFI flag : %d \r\n", BleStatus , WifiStatus);
 					if(!(WifiStatus || BleStatus ))
 					{
-						if ((llCurrentTick - llSysTick) >= (10 * 32768))
+						if ((llCurrentTick - llSysTick) >= (psConfigData[0].sConfigTimes.usLteTimeout * 32768))
 						{
+							printk("DEBUG : LTE Timeout>>>>>> : %d\n", psConfigData[0].sConfigTimes.usLteTimeout);
 							if(cloud_connected == true && gnss_connected == true)
 							{
 								printk("DEBUG: Connection successful\r\n");
