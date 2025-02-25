@@ -120,17 +120,17 @@ void SetDeviceState(_eDevState DeviceState)
     DevState = DeviceState;
 }
 
-bool InitEnable9160()
+bool Enable9160()
 {
     bool bRetVal = false;
 
     do
     {
-        if (!device_is_ready(&sEnablePin)) 
-        {
-            printf("E: PowerPin reference not available\n\r");
-            break;
-        }
+        // if (!device_is_ready(&sEnablePin)) 
+        // {
+        //     printf("E: PowerPin reference not available\n\r");
+        //     break;
+        // }
 
         if (gpio_pin_configure_dt(&sEnablePin, GPIO_OUTPUT | GPIO_ACTIVE_HIGH) < 0)
         {
@@ -140,7 +140,7 @@ bool InitEnable9160()
 
 
         // gpio_pin_set_dt(psPowerPin, 1);
-        gpio_pin_set(sEnablePin.port, sEnablePin.pin, 1);
+        gpio_pin_set(sEnablePin.port, sEnablePin.pin, 0);
         // if (gpio_pin_set_dt(psPowerPin, ))
         bRetVal = true;
 

@@ -30,6 +30,7 @@ void ProcessDeviceState();
 void PollMsgs();
 _eDevState *GetDeviceState();
 void SetDeviceState(_eDevState DeviceState);
+bool Enable9160();
 
 #endif
 

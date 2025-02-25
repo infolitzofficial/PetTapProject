@@ -185,7 +185,7 @@ static void gnss_event_handler(int event)
 	case NRF_MODEM_GNSS_EVT_NMEA:
 		nmea_data = k_malloc(sizeof(struct nrf_modem_gnss_nmea_data_frame));
 		if (nmea_data == NULL) {
-			LOG_ERR("Failed to allocate memory for NMEA");
+			printk("Failed to allocate memory for NMEA");
 			break;
 		}
 
@@ -245,7 +245,7 @@ void lte_connect(void)
 
 	err = lte_lc_func_mode_set(LTE_LC_FUNC_MODE_ACTIVATE_LTE);
 	if (err) {
-		LOG_ERR("Failed to activate LTE, error: %d", err);
+		printk("Failed to activate LTE, error: %d", err);
 		return;
 	}
 
@@ -261,7 +261,7 @@ void lte_disconnect(void)
 
 	err = lte_lc_func_mode_set(LTE_LC_FUNC_MODE_DEACTIVATE_LTE);
 	if (err) {
-		LOG_ERR("Failed to deactivate LTE, error: %d", err);
+		printk("Failed to deactivate LTE, error: %d", err);
 		return;
 	}
 
@@ -312,7 +312,7 @@ static void agps_data_get_work_fn(struct k_work *item)
 
 	err = assistance_request(&last_agps);
 	if (err) {
-		LOG_ERR("Failed to request assistance data");
+		printk("Failed to request assistance data");
 	}
 
 #if defined(CONFIG_GNSS_SAMPLE_LTE_ON_DEMAND)
@@ -358,7 +358,7 @@ static int ttff_test_force_cold_start(void)
 
 	err = nrf_modem_gnss_nv_data_delete(delete_mask);
 	if (err) {
-		LOG_ERR("Failed to delete GNSS data");
+		printk("Failed to delete GNSS data");
 		return -1;
 	}
 
@@ -406,7 +406,7 @@ static void ttff_test_start_work_fn(struct k_work *item)
 {
 	LOG_INF("Starting GNSS");
 	if (nrf_modem_gnss_start() != 0) {
-		LOG_ERR("Failed to start GNSS");
+		printk("Failed to start GNSS");
 		return;
 	}
 
@@ -427,7 +427,7 @@ static int modem_init(void)
 	}
 
 	if (lte_lc_init() != 0) {
-		LOG_ERR("Failed to initialize LTE link controller");
+		printk("Failed to initialize LTE link controller");
 		printk("\nFailed to initialize LTE link controller");
 		return -1;
 	}
@@ -440,7 +440,7 @@ static int modem_init(void)
 	LOG_INF("Connecting to LTE network");
 
 	if (lte_lc_connect() != 0) {
-		LOG_ERR("Failed to connect to LTE network");
+		printk("Failed to connect to LTE network");
 		return -1;
 	}
 
@@ -499,14 +499,14 @@ static int gnss_init_and_start(void)
 #if defined(CONFIG_GNSS_SAMPLE_ASSISTANCE_NONE) || defined(CONFIG_GNSS_SAMPLE_LTE_ON_DEMAND)
 	/* Enable GNSS. */
 	if (lte_lc_func_mode_set(LTE_LC_FUNC_MODE_ACTIVATE_GNSS) != 0) {
-		LOG_ERR("Failed to activate GNSS functional mode");
+		printk("Failed to activate GNSS functional mode");
 		return -1;
 	}
 #endif /* CONFIG_GNSS_SAMPLE_ASSISTANCE_NONE || CONFIG_GNSS_SAMPLE_LTE_ON_DEMAND */
 
 	/* Configure GNSS. */
 	if (nrf_modem_gnss_event_handler_set(gnss_event_handler) != 0) {
-		LOG_ERR("Failed to set GNSS event handler");
+		printk("Failed to set GNSS event handler");
 		return -1;
 	}
 
@@ -518,7 +518,7 @@ static int gnss_init_and_start(void)
 			     NRF_MODEM_GNSS_NMEA_GSV_MASK;
 
 	if (nrf_modem_gnss_nmea_mask_set(nmea_mask) != 0) {
-		LOG_ERR("Failed to set GNSS NMEA mask");
+		printk("Failed to set GNSS NMEA mask");
 		return -1;
 	}
 
@@ -541,7 +541,7 @@ static int gnss_init_and_start(void)
 
 #if defined(CONFIG_NRF_CLOUD_AGPS_ELEVATION_MASK)
 	if (nrf_modem_gnss_elevation_threshold_set(CONFIG_NRF_CLOUD_AGPS_ELEVATION_MASK) != 0) {
-		LOG_ERR("Failed to set elevation threshold");
+		printk("Failed to set elevation threshold");
 		return -1;
 	}
 	LOG_DBG("Set elevation threshold to %u", CONFIG_NRF_CLOUD_AGPS_ELEVATION_MASK);
@@ -558,7 +558,7 @@ static int gnss_init_and_start(void)
 #endif
 
 	if (nrf_modem_gnss_power_mode_set(power_mode) != 0) {
-		LOG_ERR("Failed to set GNSS power saving mode");
+		printk("Failed to set GNSS power saving mode");
 		return -1;
 	}
 #endif /* CONFIG_GNSS_SAMPLE_MODE_CONTINUOUS */
@@ -577,12 +577,12 @@ static int gnss_init_and_start(void)
 #endif
 
 	if (nrf_modem_gnss_fix_retry_set(fix_retry) != 0) {
-		LOG_ERR("Failed to set GNSS fix retry");
+		printk("Failed to set GNSS fix retry");
 		return -1;
 	}
 
 	if (nrf_modem_gnss_fix_interval_set(fix_interval) != 0) {
-		LOG_ERR("Failed to set GNSS fix interval");
+		printk("Failed to set GNSS fix interval");
 		return -1;
 	}
 
@@ -590,7 +590,7 @@ static int gnss_init_and_start(void)
 	k_work_schedule_for_queue(&gnss_work_q, &ttff_test_prepare_work, K_NO_WAIT);
 #else /* !CONFIG_GNSS_SAMPLE_MODE_TTFF_TEST */
 	if (nrf_modem_gnss_start() != 0) {
-		LOG_ERR("Failed to start GNSS");
+		printk("Failed to start GNSS");
 		return -1;
 	}
 #endif
@@ -706,7 +706,7 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 
 	err = date_time_now(&message_ts);
 	if (err) {
-		LOG_ERR("date_time_now, error: %d", err);
+		printk("date_time_now, error: %d", err);
 		return err;
 	}
 
@@ -714,7 +714,7 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	/* Request battery voltage data from the modem. */
 	err = modem_info_short_get(MODEM_INFO_BATTERY, &bat_voltage);
 	if (err != sizeof(bat_voltage)) {
-		LOG_ERR("modem_info_short_get, error: %d", err);
+		printk("modem_info_short_get, error: %d", err);
 		return err;
 	}
 #endif
@@ -751,13 +751,13 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 	err += json_add_obj(root_obj, "state", state_obj);
 
 	if (err) {
-		LOG_ERR("json_add, error: %d", err);
+		printk("json_add, error: %d", err);
 		goto cleanup;
 	}
 
 	message = cJSON_Print(root_obj);
 	if (message == NULL) {
-		LOG_ERR("cJSON_Print, error: returned NULL");
+		printk("cJSON_Print, error: returned NULL");
 		err = -ENOMEM;
 		goto cleanup;
 	}
@@ -776,7 +776,7 @@ static int shadow_update(struct nrf_modem_gnss_pvt_data_frame *pvt_data)
 
 	err = aws_iot_send(&tx_data);
 	if (err) {
-		LOG_ERR("aws_iot_send, error: %d", err);
+		printk("aws_iot_send, error: %d", err);
 	}
 
 	cJSON_FreeString(message);
@@ -803,7 +803,7 @@ static int app_topics_subscribe(void)
 
 	err = aws_iot_subscription_topics_add(topics_list, ARRAY_SIZE(topics_list));
 	if (err) {
-		LOG_ERR("aws_iot_subscription_topics_add, error: %d", err);
+		printk("aws_iot_subscription_topics_add, error: %d", err);
 	}
 
 	return err;
@@ -817,13 +817,13 @@ static void print_received_data(const char *buf, const char *topic,
 
 	root_obj = cJSON_Parse(buf);
 	if (root_obj == NULL) {
-		LOG_ERR("cJSON Parse failure");
+		printk("cJSON Parse failure");
 		return;
 	}
 
 	str = cJSON_Print(root_obj);
 	if (str == NULL) {
-		LOG_ERR("Failed to print JSON object");
+		printk("Failed to print JSON object");
 		goto clean_exit;
 	}
 
@@ -849,7 +849,7 @@ printk("Connct to work fn");
 	
 	err = aws_iot_connect(NULL);
 	if (err) {
-		LOG_ERR("aws_iot_connect, error: %d", err);
+		printk("aws_iot_connect, error: %d", err);
 	}
 
 	LOG_INF("Next connection retry in %d seconds",
@@ -903,7 +903,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 #if defined(CONFIG_NRF_MODEM_LIB)
 		int err = lte_lc_psm_req(true);
 		if (err) {
-			LOG_ERR("Requesting PSM failed, error: %d", err);
+			printk("Requesting PSM failed, error: %d", err);
 		}
 #endif
 		break;
@@ -938,7 +938,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 #if defined(CONFIG_NRF_MODEM_LIB)
 		err = lte_lc_offline();
 		if (err) {
-			LOG_ERR("Error disconnecting from LTE");
+			printk("Error disconnecting from LTE");
 		}
 #endif
 		break;
@@ -948,7 +948,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 #if defined(CONFIG_NRF_MODEM_LIB)
 		err = lte_lc_connect();
 		if (err) {
-			LOG_ERR("Error connecting to LTE");
+			printk("Error connecting to LTE");
 		}
 #endif
 		break;
@@ -1030,7 +1030,7 @@ int main(void)
 
 	err = nrf_modem_lib_init();
 	if (err) {
-		LOG_ERR("Modem library initialization failed, error: %d", err);
+		printk("Modem library initialization failed, error: %d", err);
 		return err;
 	}
 
@@ -1044,7 +1044,7 @@ int main(void)
 
 		err = aws_iot_init(NULL, aws_iot_event_handler);
 	if (err) {
-		LOG_ERR("AWS IoT library could not be initialized, error: %d", err);
+		printk("AWS IoT library could not be initialized, error: %d", err);
 	}
 
 	/** Subscribe to customizable non-shadow specific topics
@@ -1052,31 +1052,31 @@ int main(void)
 	 */
 	err = app_topics_subscribe();
 	if (err) {
-		LOG_ERR("Adding application specific topics failed, error: %d", err);
+		printk("Adding application specific topics failed, error: %d", err);
 	}
 
 
 	err = lte_lc_init_and_connect_async(lte_handler);/*lte lc initialization*/
 	if (err) {
-		LOG_ERR("Modem could not be configured, error: %d", err);
+		printk("Modem could not be configured, error: %d", err);
 		return 0;
 	}
 
 	err = modem_info_init();/**/
 	if (err) {
-		LOG_ERR("Failed initializing modem info module, error: %d", err);
+		printk("Failed initializing modem info module, error: %d", err);
 	}
 	k_work_init_delayable(&connect_work, connect_work_fn);
 	
 
 
 	if (sample_init() != 0) {
-		LOG_ERR("Failed to initialize sample");
+		printk("Failed to initialize sample");
 		return -1;
 	}
 
 	if (gnss_init_and_start() != 0) {
-		LOG_ERR("Failed to initialize and start GNSS");
+		printk("Failed to initialize and start GNSS");
 		return -1;
 	}
 
@@ -1085,7 +1085,7 @@ int main(void)
 
 	// err = lte_lc_func_mode_set(LTE_LC_FUNC_MODE_DEACTIVATE_LTE);
 	// if (err) {
-	// 	LOG_ERR("Failed to deactivate LTE, error: %d", err);
+	// 	printk("Failed to deactivate LTE, error: %d", err);
 	// 	return;
 	// }
 
@@ -1166,7 +1166,7 @@ static void GpsTask()
 
 					// err = lte_lc_func_mode_set(LTE_LC_FUNC_MODE_ACTIVATE_LTE);
 					// if (err) {
-					// LOG_ERR("Failed to activate LTE, error: %d", err);
+					// printk("Failed to activate LTE, error: %d", err);
 					// return;
 					// }
 					// NRFX_DELAY_US(2000000);

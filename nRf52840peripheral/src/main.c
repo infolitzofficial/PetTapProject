@@ -59,6 +59,8 @@ int main(void)
 
     NFCSetup();
 
+    Enable9160();
+
 
     while(1)
     {

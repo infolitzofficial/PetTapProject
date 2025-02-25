@@ -348,11 +348,11 @@ bool InitWiFiPowerPin()
 
     do
     {
-        if (!device_is_ready(&psPowerPin)) 
-        {
-            printf("E: PowerPin reference not available\n\r");
-            break;
-        }
+        // if (!device_is_ready(&psPowerPin)) 
+        // {
+        //     printf("E: PowerPin reference not available\n\r");
+        //     break;
+        // }
 
         if (gpio_pin_configure_dt(&psPowerPin, GPIO_OUTPUT | GPIO_ACTIVE_HIGH) < 0)
         {
