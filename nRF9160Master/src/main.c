@@ -1274,6 +1274,7 @@ static void SystemTask()
 	
 
 	InitTimerTask();
+	InitWiFiPowerPin();
 #ifdef NVS_ENABLE
 	nRetVal = NvsInit();
 

@@ -45,6 +45,7 @@ bool UpdateLocation(_sGnssConfig *psLocationData);
 void InitTimerTask();
 void StarTimerTask(int nPeriod);
 _sGnssConfig * GetLocationData();
+bool InitWiFiPowerPin();
 
 #endif
 

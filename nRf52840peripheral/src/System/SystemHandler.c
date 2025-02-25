@@ -18,7 +18,7 @@
 
 /******************************************TYPEDEFS*********************************************************/
 static _eDevState DevState = BLE_IDLE;
-
+static const struct gpio_dt_spec sEnablePin = GPIO_DT_SPEC_GET_OR(DT_NODELABEL(gpsenable), gpios, {0});
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
  * @brief       : Process Device state of MASTER device
@@ -120,4 +120,34 @@ void SetDeviceState(_eDevState DeviceState)
     DevState = DeviceState;
 }
 
+bool InitEnable9160()
+{
+    bool bRetVal = false;
+
+    do
+    {
+        if (!device_is_ready(&sEnablePin)) 
+        {
+            printf("E: PowerPin reference not available\n\r");
+            break;
+        }
+
+        if (gpio_pin_configure_dt(&sEnablePin, GPIO_OUTPUT | GPIO_ACTIVE_HIGH) < 0)
+        {
+            printf("E: PowerPin configuring failed\n\r");
+            break;
+        }
+
+
+        // gpio_pin_set_dt(psPowerPin, 1);
+        gpio_pin_set(sEnablePin.port, sEnablePin.pin, 1);
+        // if (gpio_pin_set_dt(psPowerPin, ))
+        bRetVal = true;
+
+    } while (0);
+        
+
+    return bRetVal;
+    // DEVICE_DT_GET(DT_NODE)
+}
 //EOF

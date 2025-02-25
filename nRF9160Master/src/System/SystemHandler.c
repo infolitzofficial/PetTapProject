@@ -13,6 +13,10 @@
 #include "../NVS/NvsHandler.h"
 #include "zephyr/sys/printk.h"
 #include <sys/_stdint.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/devicetree.h>
 
 /*******************************************MACROS**********************************************************/
 #define BUFFER_SIZE     255
@@ -26,6 +30,7 @@ static bool TimerExpired = false;
 static long long llSysTick = 0;
 static uint8_t uCredIdx = 0;
 
+static const struct gpio_dt_spec psPowerPin = GPIO_DT_SPEC_GET_OR(DT_NODELABEL(led3), gpios, {0});
 /*****************************************FUNCTION DEFINITION***********************************************/
 /**
  * @brief       : Connect to a 52840 device 
@@ -335,6 +340,37 @@ void StarTimerTask(int nPeriod)
 void StopTimer()
 {
     k_timer_stop(&Timer);
+}
+
+bool InitWiFiPowerPin()
+{
+    bool bRetVal = false;
+
+    do
+    {
+        if (!device_is_ready(&psPowerPin)) 
+        {
+            printf("E: PowerPin reference not available\n\r");
+            break;
+        }
+
+        if (gpio_pin_configure_dt(&psPowerPin, GPIO_OUTPUT | GPIO_ACTIVE_HIGH) < 0)
+        {
+            printf("E: PowerPin configuring failed\n\r");
+            break;
+        }
+
+
+        // gpio_pin_set_dt(psPowerPin, 1);
+        gpio_pin_set(psPowerPin.port, psPowerPin.pin, 1);
+        // if (gpio_pin_set_dt(psPowerPin, ))
+        bRetVal = true;
+
+    } while (0);
+        
+
+    return bRetVal;
+    // DEVICE_DT_GET(DT_NODE)
 }
 
 //EOF

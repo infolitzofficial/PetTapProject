@@ -15,7 +15,18 @@
 &uart1 {
  status = "okay";
 };
- 
+
+// / {
+//     da_powerpin {
+//         compatible = "eac,testpin";
+//         gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+//         status = "okay";
+//     };  
+// };
+
+
+
+
 &pinctrl {
     uart2_default: uart2_default {
         group1 {
@@ -66,4 +77,8 @@
     pinctrl-0 = <&i2c3_default>;
     pinctrl-1 = <&i2c3_sleep>;
     pinctrl-names = "default", "sleep";
+};
+&led3 {
+    label = "da_power";
+    gpios = <&gpio0 5 0>;
 };
