@@ -223,10 +223,10 @@ bool SendPayloadToBle()
     bool bRetVal = false;
     char cPayload[PAYLOAD_SIZE];
     _sPacket sPacket = {0};
-    float fTempCharger = 0.0; 
-    float fVoltcharger=0.00;
-    fVoltcharger= ReadI2CVoltage();
-    fTempCharger= ReadI2CTemperature();
+    float fTempCharger = 23.5; 
+    float fVoltcharger=3.3;
+    // fVoltcharger= ReadI2CVoltage();
+    // fTempCharger= ReadI2CTemperature();
     psLocationData = GetLocationData();
 
     if (psLocationData)

@@ -1024,7 +1024,7 @@ int main(void)
 	cJSON_Init();
 	InitUart();
 	InitBleUart();
-	InitI2CCharger();
+	// InitI2CCharger();
 
 	LOG_INF("Starting GNSS AWS sample");
 
@@ -1298,8 +1298,10 @@ static void SystemTask()
 		ProcessBleMsg();
 		ProcessDeviceState();
 
-		fVolt = ReadI2CVoltage();
-		fTemp = ReadI2CTemperature();
+		fVolt = 3.3;
+		fTemp = 23.5;
+		// fVolt = ReadI2CVoltage();
+		// fTemp = ReadI2CTemperature();
 
 		printk("Volt Read from PMIC : %f, Temp Read from PMIC %f\n", fVolt, fTemp);
 		k_msleep(10);

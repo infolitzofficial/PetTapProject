@@ -1,0 +1,7 @@
+{
+    "idf.pythonInstallPath": "C:\\Users\\jishn\\.espressif\\tools\\idf-python\\3.8.7\\python.exe",
+    "nrf-connect.applications": [
+        "${workspaceFolder}\\nRF9160Master",
+        "${workspaceFolder}\\nRf52840peripheral"
+    ]
+}
